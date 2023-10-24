@@ -5,6 +5,7 @@ import javafx.fxml.FXML;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 
 import java.io.*;
@@ -29,7 +30,7 @@ public class Controller {
     private TextField experimentNameField;
 
     @FXML
-    private VBox imagesBox;
+    private Pane imagesBox;
 
     @FXML
     private Parent afterConnectInterface;
@@ -61,6 +62,7 @@ public class Controller {
     private SerialPort port;
     private OutputStream log;
     private String logFileName;
+    private String countedExperimentName;
     int baudRate = 9600;
 
     @FXML
@@ -140,7 +142,12 @@ public class Controller {
         for(File scriptFile : scriptDir.listFiles()) {
             try {
                 System.out.println("Running script: "+scriptFile.getName());
-                ProcessBuilder processBuilder = new ProcessBuilder(pythonField.getText(), scriptFile.getAbsolutePath(), logFileName);
+                ProcessBuilder processBuilder = new ProcessBuilder(
+                        pythonField.getText(), scriptFile.getAbsolutePath(),
+                        logFileName,
+                        "-f", frequencyField.getText(),
+                        timeCountToggleButton.isSelected()?"-c":"-t", timeCountField.getText(),
+                        "-i", interfaceSelector.getValue()==null?"NONE":interfaceSelector.getValue().value);
                 processBuilder.redirectErrorStream(true);
 
                 processBuilder.directory(scriptRunDirectory);
@@ -174,8 +181,10 @@ public class Controller {
         }
         File finalLocation;
         if (scriptRunDirectory.exists() && !experimentNameField.getText().equals("")) {
-            File moveTo = new File(new File(dataDirField.getText()), experimentNameField.getText());
-            scriptRunDirectory.renameTo(moveTo);
+            File moveTo = new File(new File(dataDirField.getText()), countedExperimentName);
+            System.out.println("Moving named experiment to: "+moveTo.getAbsolutePath());
+            boolean ok = scriptRunDirectory.renameTo(moveTo);
+            System.out.println("moved: "+(ok?"True":"False"));
             finalLocation = moveTo;
         } else {
             finalLocation = scriptRunDirectory;
@@ -201,12 +210,20 @@ public class Controller {
             dataDir.mkdir();
             File logFile;
             if(!experimentNameField.getText().equals("")) {
-                logFile = new File(dataDir, experimentNameField.getText() + ".txt");
+                countedExperimentName = experimentNameField.getText();
+                logFile = new File(dataDir, countedExperimentName + ".txt");
+                int i=1;
+                while(logFile.exists()) {
+                    countedExperimentName = experimentNameField.getText() + "_("+i+")";
+                    logFile = new File(dataDir, countedExperimentName + ".txt");
+                    i++;
+                }
             } else {
                 Date date = Calendar.getInstance().getTime();
-                DateFormat dateFormat = new SimpleDateFormat("yyyy_mm_dd-hh_mm_ss");
+                DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd-HH_mm_ss");
                 String strDate = dateFormat.format(date);
-                logFile = new File(dataDir, "log_" + strDate + ".txt");
+                countedExperimentName = "log_" + strDate;
+                logFile = new File(dataDir, countedExperimentName + ".txt");
             }
             logFileName = logFile.getAbsolutePath();
             log = new FileOutputStream(logFile);

@@ -16,7 +16,7 @@
                   <Label text="Python" />
                   <TextArea fx:id="pythonOutputTextField" editable="false" maxHeight="1000.0" minHeight="150.0" prefWidth="200.0" />
                   <Label text="Images" />
-                  <VBox fx:id="imagesBox" prefHeight="200.0" prefWidth="100.0" />
+                  <FlowPane fx:id="imagesBox" prefHeight="200.0" prefWidth="200.0" />
                </children>
             </VBox>
          </content>

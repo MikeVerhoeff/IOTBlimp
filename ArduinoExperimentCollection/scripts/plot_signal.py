@@ -15,15 +15,19 @@ Lines = file1.readlines()
 print("lines:")
 print(Lines)
 
-values = [int(l) for l in Lines]
+values = [int(l) for l in Lines if l.strip().isnumeric()]
+
+if(len(values)==0):
+    exit(0)
+
+print("values:")
+print(values)
 
 count = len(values)
 time = count/frequency
 if sys.argv[4]=="-t":
     time = int(sys.argv[5])
 
-print("values:")
-print(values)
 
 assert sys.argv[6]=="-i"
 plt.title("signal: "+title+" @ "+sys.argv[7])

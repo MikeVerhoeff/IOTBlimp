@@ -10,7 +10,10 @@ title = os.path.basename(os.path.realpath(sys.argv[1]).split(".")[0])
 assert sys.argv[2]=="-f"
 frequency = int(sys.argv[3])
 
-values = [int(line) for line in open(sys.argv[1], 'r').readlines()]
+values = [int(line) for line in open(sys.argv[1], 'r').readlines() if line.strip().isnumeric()]
+
+if(len(values)==0):
+    exit(0)
 
 count = len(values)
 time = count/frequency

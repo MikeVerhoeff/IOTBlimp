@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
@@ -20,45 +21,75 @@
             </VBox>
          </content>
       </ScrollPane>
-      <VBox layoutX="16.0" layoutY="16.0">
+      <VBox layoutX="16.0" layoutY="16.0" spacing="4.0">
          <children>
-            <HBox prefWidth="200.0">
+            <HBox prefWidth="200.0" spacing="4.0">
                <children>
                   <TextField fx:id="pythonField" />
                   <Label text="Python" />
                </children>
             </HBox>
-            <HBox prefWidth="200.0">
+            <HBox prefWidth="200.0" spacing="4.0">
                <children>
                   <TextField fx:id="scriptDirectoryField" />
                   <Label text="Script Directory" />
                </children>
             </HBox>
-            <HBox prefWidth="200.0">
+            <HBox prefWidth="200.0" spacing="4.0">
                <children>
                   <TextField fx:id="dataDirField" />
                   <Label text="Data Directory" />
                </children>
             </HBox>
-            <HBox prefWidth="200.0">
+            <HBox prefWidth="200.0" spacing="4.0">
                <children>
                   <TextField fx:id="experimentNameField" />
                   <Label text="Expriment Name" />
                </children>
             </HBox>
-            <HBox layoutX="22.0" layoutY="21.0" AnchorPane.leftAnchor="16.0" AnchorPane.topAnchor="16.0">
+            <HBox layoutX="22.0" layoutY="21.0" spacing="4.0" AnchorPane.leftAnchor="16.0" AnchorPane.topAnchor="16.0">
                <children>
                   <ChoiceBox fx:id="deviceSelector" prefWidth="150.0" />
                   <Button mnemonicParsing="false" onAction="#scanForDevicesAction" text="Scan" />
                   <Button mnemonicParsing="false" onAction="#connectAction" text="Connect" />
                </children>
             </HBox>
-            <VBox prefHeight="200.0" prefWidth="100.0">
+            <VBox fx:id="afterConnectInterface" prefHeight="200.0" prefWidth="100.0" spacing="4.0">
                <children>
+                  <Separator prefWidth="200.0" />
+                  <HBox prefWidth="200.0" spacing="4.0">
+                     <children>
+                        <TextField fx:id="startDelayField" />
+                        <Label text="Start Delay" />
+                     </children>
+                  </HBox>
+                  <HBox spacing="4.0">
+                     <children>
+                        <ChoiceBox fx:id="interfaceSelector" prefWidth="150.0" />
+                        <Button mnemonicParsing="false" onAction="#scanForInterfacesAction" text="Scan" />
+                        <Label text="Interface" />
+                     </children>
+                  </HBox>
+                  <HBox layoutX="10.0" layoutY="17.0" prefWidth="200.0" spacing="4.0">
+                     <children>
+                        <TextField fx:id="frequencyField" />
+                        <Button mnemonicParsing="false" onAction="#setFrequencyAction" prefHeight="25.0" prefWidth="42.0" text="Set" />
+                        <Label text="Frequency" />
+                     </children>
+                  </HBox>
+                  <HBox prefWidth="200.0" spacing="4.0">
+                     <children>
+                        <TextField fx:id="timeCountField" />
+                        <ToggleButton fx:id="timeCountToggleButton" mnemonicParsing="false" onAction="#SwitchTimeCountAction" text="Time / (Count)" />
+                     </children>
+                  </HBox>
                   <Button mnemonicParsing="false" onAction="#startAction" text="Start" />
                </children>
             </VBox>
          </children>
+         <opaqueInsets>
+            <Insets />
+         </opaqueInsets>
       </VBox>
    </children>
 </AnchorPane>

@@ -34,7 +34,7 @@ void setup() {
   mic::addToUI(&ui);
   
   // put your setup code here, to run once:
-  Serial.begin(9600);
+  Serial.begin(115200);
   pinMode(A0, INPUT);
 }
 

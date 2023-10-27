@@ -234,7 +234,7 @@ public class Controller {
         port.addDataListener(new SerialListener(e->{
             byte[] newData = new byte[port.bytesAvailable()];
             int numRead = port.readBytes(newData, newData.length);
-            //System.out.println("Read " + numRead + " bytes.");
+//            System.out.println("Read " + numRead + " bytes.");
             Platform.runLater(()->{
                 serialOutputTextField.appendText(new String(newData, StandardCharsets.UTF_8));
             });
@@ -322,7 +322,7 @@ public class Controller {
                 try {
                     if(delay > 30) {
                         delay = 30;
-                        System.err.println("Limited delay to 30 secconds");
+                        System.err.println("Limited delay to 30 seconds");
                     }
                     Thread.sleep(delay* 1000L);
                 } catch (InterruptedException e) {

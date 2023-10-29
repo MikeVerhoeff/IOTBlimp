@@ -184,7 +184,12 @@ public class Controller {
             File moveTo = new File(new File(dataDirField.getText()), countedExperimentName);
             System.out.println("Moving named experiment to: "+moveTo.getAbsolutePath());
             boolean ok = scriptRunDirectory.renameTo(moveTo);
-            System.out.println("moved: "+(ok?"True":"False"));
+            System.out.println("moved script results: "+(ok?"True":"False"));
+
+            File logFile = new File(logFileName);
+            File logFileDst = new File(moveTo, logFile.getName());
+            logFile.renameTo(logFileDst);
+
             finalLocation = moveTo;
         } else {
             finalLocation = scriptRunDirectory;

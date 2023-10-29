@@ -1,6 +1,20 @@
 #pragma once
 
-#include <PDM.h>
+#ifndef ARDUINO_SAMD_NANO_33_IOT
+  #include <PDM.h>
+#else
+  class Fake_PDM {
+    public:
+    Fake_PDM() {}
+    int available() { return 1;}
+    void end() {}
+    void read(void* a, int b) {}
+    void onReceive(void (*a)(void)) {}
+    bool begin(int, int) {}
+  };
+  Fake_PDM PDM;
+#endif
+
 #include "Settings.h"
 #include "record.h"
 

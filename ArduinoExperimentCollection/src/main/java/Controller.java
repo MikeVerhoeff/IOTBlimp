@@ -214,13 +214,16 @@ public class Controller {
             File dataDir = new File(dataDirField.getText());
             dataDir.mkdir();
             File logFile;
+            File logFileDir;
             if(!experimentNameField.getText().equals("")) {
                 countedExperimentName = experimentNameField.getText();
                 logFile = new File(dataDir, countedExperimentName + ".txt");
+                logFileDir = new File(dataDir, countedExperimentName);
                 int i=1;
-                while(logFile.exists()) {
+                while(logFile.exists() || logFileDir.exists()) {
                     countedExperimentName = experimentNameField.getText() + "_("+i+")";
                     logFile = new File(dataDir, countedExperimentName + ".txt");
+                    logFileDir = new File(dataDir, countedExperimentName);
                     i++;
                 }
             } else {

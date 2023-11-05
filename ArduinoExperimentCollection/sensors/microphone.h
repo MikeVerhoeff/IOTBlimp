@@ -28,6 +28,14 @@ int head;
 volatile int samplesRead;
 int last_noise;
 
+//butterworth cutoff: 5z 
+float b[] = {9.62491303e-07, 1.92498261e-06, 9.62491303e-07};
+float a[] = {-1, 1.9972232,  -0.99722705};
+int yhist[] = {0, 0, 0};
+float reshist[] = {0.0f, 0.0f, 0.0f};
+const int BW_THRESHOLD_MICROPHONE = 10000;
+#define BW_FILTER_ENEBLED
+
 // Called when mic has new recordings
 //!!!!!!!!!!!!!!!!!!!!! Do not use print statements !!!!!!!!!!!!!!!!!!!!!
 void onPDMdata() { 
@@ -55,8 +63,27 @@ void test_mic() {
 
   for (int i = 0; i < samplesRead; i++) {
     int idx = (start + i)%MIC_TOTAL_SIZE;
+
+    #ifdef BW_FILTER_ENEBLED
+    // run filter:
+    yhist[0] = (float)buffer[idx]; // shift input buffer
+    yhist[1] = yhist[0];
+    yhist[2] = yhist[1];
+    
+    reshist[2] = reshist[1]; // shift memory buffer
+    reshist[1] = reshist[0];
+
+    // calculate for new sample
+    reshist[0] = b[0]*yhist[0] + b[1]*yhist[1] + b[2]*yhist[2] + a[1]*reshist[1] + a[2]*reshist[2];   
+
+    // update buffer
+    buffer[idx] = (short)reshist[0];
+    popped |= buffer[idx] > BW_THRESHOLD_MICROPHONE;
+
+    #else
     popped = abs(buffer[idx] - last_noise) > THRESHOLD_MICROPHONE;
     last_noise = buffer[idx];
+    #endif
   }
   samplesRead = 0;
 
@@ -70,6 +97,13 @@ void init_mic(int f, unsigned long t) {
   samplesRead = 0;
   last_noise = 0;
 
+  yhist[0] = 0;
+  yhist[1] = 0;
+  yhist[2] = 0;
+  reshist[0] = 0.0f;
+  reshist[1] = 0.0f;
+  reshist[2] = 0.0f;
+  
   if (f > t) {
     buffer = (short*)  calloc((t/f) * MIC_TOTAL_SIZE   , sizeof(short));
   } else buffer = (short*)  calloc(MIC_TOTAL_SIZE   , sizeof(short));

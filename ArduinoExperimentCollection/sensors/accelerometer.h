@@ -39,7 +39,9 @@ class Accelerometer {
       buff_y[head] = buff_y[head-1];
       buff_z[head] = buff_z[head-1];
     }
-    if ((buff_x[head] < 0) && (buff_z[head] < 0.5)) {
+    
+    float len = buff_x[head]*buff_x[head] + buff_y[head]*buff_y[head] + buff_z[head]*buff_z[head];
+    if (len < 0.5f*0.5f) {
       digitalWrite(LED_BUILTIN, HIGH);
     } else {
       digitalWrite(LED_BUILTIN, LOW);

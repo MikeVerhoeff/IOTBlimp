@@ -63,7 +63,7 @@ public class Controller {
     private OutputStream log;
     private String logFileName;
     private String countedExperimentName;
-    int baudRate = 9600;
+    int baudRate = 115200;
 
     @FXML
     public void initialize() {

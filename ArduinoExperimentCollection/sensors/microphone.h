@@ -34,7 +34,7 @@ float a[] = {-1, 1.9972232,  -0.99722705};
 int yhist[] = {0, 0, 0};
 float reshist[] = {0.0f, 0.0f, 0.0f};
 const int BW_THRESHOLD_MICROPHONE = 10000;
-#define BW_FILTER_ENEBLED
+// #define BW_FILTER_ENEBLED
 
 // Called when mic has new recordings
 //!!!!!!!!!!!!!!!!!!!!! Do not use print statements !!!!!!!!!!!!!!!!!!!!!

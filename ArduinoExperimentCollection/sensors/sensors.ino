@@ -28,14 +28,14 @@ SensorInterface piezos ('h', "piezos" ,
                         [](int f, unsigned long t){   pie_flex.init(f, t); pie_hard.init(f, t); }, 
                         [](){                         pie_flex.test()    ; pie_hard.test()    ; }, 
                         [](){                         pie_flex.del()     ; pie_hard.del()     ; });
-SensorInterface piezos_imu ('i', "piezos/imu" , 
-                        [](int f, unsigned long t){   pie_flex.init(f, t); pie_hard.init(f, t); acc.init(f, t); gyr.init(f, t); }, 
-                        [](){                         pie_flex.test()    ; pie_hard.test()    ; acc.test()    ; gyr.test()    ; }, 
-                        [](){                         pie_flex.del()     ; pie_hard.del()     ; acc.del()     ; gyr.del()     ; });
+SensorInterface piezos_imu ('i', "pie_hard/imu" , 
+                        [](int f, unsigned long t){   pie_hard.init(f, t); acc.init(f, t); }, 
+                        [](){                         pie_hard.test()    ; acc.test()    ; }, 
+                        [](){                         pie_hard.del()     ; acc.del()     ; });
 SensorInterface all ('j', "all", 
-                        [](int f, unsigned long t){   acc.init(f, t); gyr.init(f, t); pie_flex.init(f, t); pie_hard.init(f, t); init_mic(f, t); pro.init(f, t); },
-                        [](){                         acc.test()    ; gyr.test()    ; pie_flex.test()    ; pie_hard.test()    ; test_mic() ; pro.test()    ; },
-                        [](){                         acc.del()     ; gyr.del()     ; pie_flex.del()     ; pie_hard.del()     ; del_mic()  ; pro.del()     ; });
+                        [](int f, unsigned long t){   acc.init(f, t); pie_hard.init(f, t); pro.init(f, t); },
+                        [](){                         acc.test()    ; pie_hard.test()    ; pro.test()    ; },
+                        [](){                         acc.del()     ; pie_hard.del()     ; pro.del()     ; });
 
 void setup() {
   settings.addSensorInterface(&mic_i);
@@ -50,7 +50,7 @@ void setup() {
   settings.addSensorInterface(&all);
 
 
-  Serial.begin(9600);
+  Serial.begin(115200);
   while(!Serial);
 
   pinMode(LED_BUILTIN, OUTPUT);

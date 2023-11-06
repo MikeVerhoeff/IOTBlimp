@@ -1,0 +1,1 @@
+save_args.py PiezoH_nerf_disk_(3).txt -f 250 -t 2 -i pie_hard

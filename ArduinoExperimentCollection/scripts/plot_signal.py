@@ -29,16 +29,39 @@ time = count/frequency
 if sys.argv[4]=="-t":
     time = int(sys.argv[5])
 
+
+figures = {}
+
+plotCount = 0
 print("sensors:")
-print(sensors[:50])
+for i, sensor in enumerate(sensors):
+    name = Lines[idx_headers[i]]
+    type = name[0:3]
+    if type not in figures.keys():
+        plotCount+=1
+        figures[type] = plt.figure(plotCount)
+    
+
 
 assert sys.argv[6]=="-i"
-plt.title("signal: "+title+" @ "+sys.argv[7])
-plt.xlabel("Time (s)")
-plt.ylabel("Value")
-for i, sensor in enumerate(sensors):
-    plt.plot(np.linspace(0, time, count), sensor, label=Lines[idx_headers[i]])
-plt.legend()
 
+lastType = ""
+for i, sensor in enumerate(sensors):
+    count = len(sensor)
+    name = Lines[idx_headers[i]]
+    type = name[0:3]
+    if type != lastType:
+        if lastType!= "":
+            plt.legend()
+            plt.savefig('signal_'+lastType+'.png')
+            plt.clf()
+    
+        plt.title("signal: "+title+" @ "+sys.argv[7]+" - "+type)
+        plt.xlabel("Time (s)")
+        plt.ylabel("Value")
+    plt.plot(np.linspace(0, time, count), sensor, label=Lines[idx_headers[i]])
+    lastType = type
+plt.legend()
 #plt.show()
-plt.savefig('signal.png')
+plt.savefig('signal_'+lastType+'.png')
+    

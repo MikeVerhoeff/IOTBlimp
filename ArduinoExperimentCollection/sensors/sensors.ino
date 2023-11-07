@@ -33,9 +33,9 @@ SensorInterface piezos_imu ('i', "pie_hard/imu" ,
                         [](){                         pie_hard.test()    ; acc.test()    ; }, 
                         [](){                         pie_hard.del()     ; acc.del()     ; });
 SensorInterface all ('j', "all", 
-                        [](int f, unsigned long t){   acc.init(f, t); pie_hard.init(f, t); pro.init(f, t); },
-                        [](){                         acc.test()    ; pie_hard.test()    ; pro.test()    ; },
-                        [](){                         acc.del()     ; pie_hard.del()     ; pro.del()     ; });
+                        [](int f, unsigned long t){   acc.init(f, t); pie_hard.init(f, t); pro.init(f, t); init_mic(f, t); },
+                        [](){                         acc.test()    ; pie_hard.test()    ; pro.test()    ; test_mic()    ; },
+                        [](){              del_mic(); acc.del()     ; pie_hard.del()     ; pro.del()     ; });
 
 void setup() {
   settings.addSensorInterface(&mic_i);
@@ -57,6 +57,7 @@ void setup() {
 };
 
 void loop() {
+  digitalWrite(LED_BUILTIN, HIGH);
   if(Serial.available()>0) {
     char c = Serial.read();
     if(c=='f') {

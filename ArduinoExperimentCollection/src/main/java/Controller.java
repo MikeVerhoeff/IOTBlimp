@@ -244,7 +244,7 @@ public class Controller {
             int numRead = port.readBytes(newData, newData.length);
 //            System.out.println("Read " + numRead + " bytes.");
             Platform.runLater(()->{
-                serialOutputTextField.appendText(new String(newData, StandardCharsets.UTF_8));
+                //serialOutputTextField.appendText(new String(newData, StandardCharsets.UTF_8));
             });
             boolean end_found = false;
             int end_index = 0;

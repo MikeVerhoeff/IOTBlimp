@@ -34,7 +34,7 @@ float a[] = {-1, 1.9972232,  -0.99722705};
 int yhist[] = {0, 0, 0};
 float reshist[] = {0.0f, 0.0f, 0.0f};
 const int BW_THRESHOLD_MICROPHONE = 10000;
-// #define BW_FILTER_ENEBLED
+#define BW_FILTER_ENEBLED
 
 // Called when mic has new recordings
 //!!!!!!!!!!!!!!!!!!!!! Do not use print statements !!!!!!!!!!!!!!!!!!!!!
@@ -54,7 +54,8 @@ void onPDMdata() {
 }
 
 void test_mic() {
-  static bool popped = false;
+  //static bool popped = false;
+  bool popped = false;
 
   if (!samplesRead) return;
 
@@ -79,11 +80,16 @@ void test_mic() {
     // update buffer
     buffer[idx] = (short)reshist[0];
     popped |= buffer[idx] > BW_THRESHOLD_MICROPHONE;
-
+    
     #else
     popped = abs(buffer[idx] - last_noise) > THRESHOLD_MICROPHONE;
     last_noise = buffer[idx];
     #endif
+
+    //buffer[idx] = buffer[idx] - BW_THRESHOLD_MICROPHONE;
+    //if(popped) {
+    //  buffer[idx] = -buffer[idx];
+    //}
   }
   samplesRead = 0;
 

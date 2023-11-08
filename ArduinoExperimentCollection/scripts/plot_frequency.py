@@ -37,6 +37,7 @@ for i, sensor in enumerate(sensors):
     time = count/frequency
     if sys.argv[4]=="-t":
         time = int(sys.argv[5])
+        frequency = count/time
     
     N = count
     # sample spacing

@@ -63,6 +63,7 @@ public class Controller {
     private OutputStream log;
     private String logFileName;
     private String countedExperimentName;
+    private boolean saveEnded;
     int baudRate = 115200;
 
     @FXML
@@ -210,6 +211,7 @@ public class Controller {
         pythonOutputTextField.clear();
         serialOutputTextField.clear();
         imagesBox.getChildren().clear();
+        saveEnded = false;
         try {
             File dataDir = new File(dataDirField.getText());
             dataDir.mkdir();
@@ -243,9 +245,6 @@ public class Controller {
             byte[] newData = new byte[port.bytesAvailable()];
             int numRead = port.readBytes(newData, newData.length);
 //            System.out.println("Read " + numRead + " bytes.");
-            Platform.runLater(()->{
-                //serialOutputTextField.appendText(new String(newData, StandardCharsets.UTF_8));
-            });
             boolean end_found = false;
             int end_index = 0;
             for (int i=0; i<numRead; i++) {
@@ -255,7 +254,7 @@ public class Controller {
                     end_index = i;
                 }
             }
-            if(log != null) {
+            if (log != null) {
                 try {
                     if (end_found) {
                         log.write(newData, 0, end_index);
@@ -269,6 +268,14 @@ public class Controller {
                 } catch (Exception ex) {
 
                 }
+            }
+            if(end_found) {
+                saveEnded = true;
+            }
+            if(saveEnded) {
+                Platform.runLater(() -> {
+                    serialOutputTextField.appendText(new String(newData, StandardCharsets.UTF_8));
+                });
             }
         }));
     }

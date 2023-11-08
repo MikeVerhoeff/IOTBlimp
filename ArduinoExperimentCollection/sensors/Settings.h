@@ -5,14 +5,14 @@
 #define NUM_INTERFACES 10
 #define STOP_CHAR 'e'
 
-const int MIC_BUFFER_SIZE = 1024;
-const uint32_t MIC_TOTAL_SIZE = 16*MIC_BUFFER_SIZE;
+int MIC_BUFFER_SIZE = 1024;
+uint32_t MIC_TOTAL_SIZE = 16*MIC_BUFFER_SIZE;
 
 
 class Settings {
 private:
   SensorInterface* interfaces[NUM_INTERFACES] = {nullptr};
-  unsigned long frequency = 250;
+  unsigned long frequency = 175;
   int selected_interface = 0;
   
 public:
@@ -75,12 +75,18 @@ public:
   }
   
   void run_times(unsigned long n) {
-    unsigned long delta = 1000000/frequency;
-    unsigned long next_time = micros();
+    digitalWrite(LED_BUILTIN, HIGH);
     interfaces[selected_interface]->init(frequency, n);
 
+    digitalWrite(LED_BUILTIN, LOW);
+    delay(200);
+    digitalWrite(LED_BUILTIN, HIGH);
+    
+    unsigned long delta = 1000000/frequency;
+    unsigned long next_time = micros();
+    
+    unsigned long current_time;
     for(unsigned long i=0; i<n; i++) {
-      unsigned long current_time;
       do {
         current_time = micros();
       } while(current_time < next_time);
@@ -89,6 +95,18 @@ public:
     }
     interfaces[selected_interface]->del();
     Serial.println(STOP_CHAR);
+    delay(100);
+    Serial.println("stopped");
+    Serial.print("Delta: ");
+    Serial.println(delta);
+    Serial.print("Overrun: ");
+    Serial.print(current_time - (next_time-delta));
+    Serial.println(" us");
+    if(current_time - (next_time-delta) < delta) {
+      Serial.println("Timing: OK");
+    } else {
+      Serial.println("Timing: Frequency to high");
+    }
   }
   
 };

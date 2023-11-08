@@ -22,10 +22,13 @@
 const int THRESHOLD_MICROPHONE = 15000;
 const int SMP_FREQUENCY = 16000;
 
+int allocated_mic_size = 0;
+
 short* buffer;
 int head;
 
 volatile int samplesRead;
+volatile bool initFinished;
 int last_noise;
 
 //butterworth cutoff: 5z 
@@ -38,32 +41,48 @@ const int BW_THRESHOLD_MICROPHONE = 10000;
 
 // Called when mic has new recordings
 //!!!!!!!!!!!!!!!!!!!!! Do not use print statements !!!!!!!!!!!!!!!!!!!!!
-void onPDMdata() { 
+void onPDMdata() {
   int bytesAvailable = PDM.available();
-  if (bytesAvailable > 2*MIC_TOTAL_SIZE) bytesAvailable = 2*MIC_TOTAL_SIZE;
-  samplesRead = bytesAvailable / 2;
 
-  if(samplesRead + head > MIC_TOTAL_SIZE) {
-    int read_after_head = 2*(MIC_TOTAL_SIZE - head);
+  if(!initFinished) {
+    short tmp[16];
+    while(bytesAvailable>0) {
+      if(bytesAvailable>16) {
+        PDM.read(tmp, 16);
+        bytesAvailable -= 16;
+      } else {
+        PDM.read(tmp, bytesAvailable);
+        bytesAvailable = 0;
+      }
+    }
+    return;
+  }
+  
+  if (bytesAvailable > 2*allocated_mic_size) bytesAvailable = 2*allocated_mic_size;
+  samplesRead = bytesAvailable / 2;
+  
+  if(samplesRead + head > allocated_mic_size) {
+    int read_after_head = 2*(allocated_mic_size - head);
     PDM.read(buffer + head, read_after_head);
     PDM.read(buffer, bytesAvailable - read_after_head);
   } else {
     PDM.read(buffer + head, bytesAvailable);
   }
-  head = (head + samplesRead)%MIC_TOTAL_SIZE;
+  head = (head + samplesRead)%allocated_mic_size;
 }
 
 void test_mic() {
+  initFinished = true;
   //static bool popped = false;
   bool popped = false;
 
   if (!samplesRead) return;
 
   int start = head - samplesRead;
-  if(start < 0) start += MIC_TOTAL_SIZE;
+  if(start < 0) start += allocated_mic_size;
 
   for (int i = 0; i < samplesRead; i++) {
-    int idx = (start + i)%MIC_TOTAL_SIZE;
+    int idx = (start + i)%allocated_mic_size;
 
     #ifdef BW_FILTER_ENEBLED
     // run filter:
@@ -98,10 +117,11 @@ void test_mic() {
 }
 
 
-void init_mic(int f, unsigned long t) {
+void init_mic(int f, unsigned long n) {
   head = 0;
   samplesRead = 0;
   last_noise = 0;
+  initFinished = false;
 
   yhist[0] = 0;
   yhist[1] = 0;
@@ -109,21 +129,28 @@ void init_mic(int f, unsigned long t) {
   reshist[0] = 0.0f;
   reshist[1] = 0.0f;
   reshist[2] = 0.0f;
+
   
-  if (f > t) {
-    buffer = (short*)  calloc((t/f) * MIC_TOTAL_SIZE   , sizeof(short));
-  } else buffer = (short*)  calloc(MIC_TOTAL_SIZE   , sizeof(short));
+  //MIC_TOTAL_SIZE = 16 * 1024 * ((t+f-1)/f) * 2;
+  //buffer = (short*)  calloc(MIC_TOTAL_SIZE   , sizeof(short));
+  
+  //if (f > n) { // if recording longer than 1 seccond
+    int t = (n+f-1)/f;
+    allocated_mic_size = t * MIC_TOTAL_SIZE;
+    buffer = (short*)  calloc(allocated_mic_size   , sizeof(short));
+  //} else buffer = (short*)  calloc(MIC_TOTAL_SIZE   , sizeof(short));
 
 
   PDM.onReceive(onPDMdata);
   if (!PDM.begin(1, SMP_FREQUENCY)) Serial.println("Failed to start MICROPHONE!");
+  delay(1000);
 }
 
 void del_mic() {
   PDM.end();
 
-  print("MIC:", buffer, head, MIC_TOTAL_SIZE);
-
+  print("MIC:", buffer, head, allocated_mic_size);
+  allocated_mic_size = 0;
   free(buffer);
 
   digitalWrite(LED_BUILTIN, LOW);

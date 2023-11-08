@@ -31,7 +31,7 @@ class Gyroscope {
     head = 1;
   }
 
-  void test() {
+  short test() {
     if (IMU.gyroscopeAvailable()) IMU.readGyroscope(buff_x[head], buff_y[head], buff_z[head]);
     else {
       buff_x[head] = buff_x[head-1];
@@ -40,6 +40,8 @@ class Gyroscope {
     }
 
     head += 1;
+
+    return 0;
   }
 
   void del() {

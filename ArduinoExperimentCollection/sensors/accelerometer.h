@@ -32,7 +32,7 @@ class Accelerometer {
     head = 1;
   }
 
-  void test() {
+  short test() {
     if (IMU.accelerationAvailable()) IMU.readAcceleration(buff_x[head], buff_y[head], buff_z[head]);
     else {
       buff_x[head] = buff_x[head-1];
@@ -41,13 +41,14 @@ class Accelerometer {
     }
     
     float len = buff_x[head]*buff_x[head] + buff_y[head]*buff_y[head] + buff_z[head]*buff_z[head];
-    if (len < 0.5f*0.5f) {
+    /*if (len < 0.5f*0.5f) {
       digitalWrite(LED_BUILTIN, HIGH);
     } else {
       digitalWrite(LED_BUILTIN, LOW);
-    }
+    }*/
 
     head += 1;
+    return len*1000;
   }
 
   void del() {

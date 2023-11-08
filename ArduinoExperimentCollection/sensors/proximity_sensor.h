@@ -26,16 +26,18 @@ class Proximity {
     last_value = APDS.readProximity();
   }
 
-  void test() {
+  short test() {
     if(APDS.proximityAvailable()) buffer[head] = APDS.readProximity();
     else buffer[head] = last_value;
 
-    if(buffer[head] > THRESHOLD_PROXIMITY) 
-      digitalWrite(LED_BUILTIN, HIGH);
-    else digitalWrite(LED_BUILTIN, LOW);
+    //if(buffer[head] > THRESHOLD_PROXIMITY) 
+    //  digitalWrite(LED_BUILTIN, HIGH);
+    //else digitalWrite(LED_BUILTIN, LOW);
 
     last_value = buffer[head];
     head += 1;
+
+    return last_value;
   }
 
   void del() {

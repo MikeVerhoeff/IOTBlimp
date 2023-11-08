@@ -71,16 +71,18 @@ void onPDMdata() {
   head = (head + samplesRead)%allocated_mic_size;
 }
 
-void test_mic() {
+short test_mic() {
   initFinished = true;
   //static bool popped = false;
   bool popped = false;
 
-  if (!samplesRead) return;
+  if (!samplesRead) return 0;
 
   int start = head - samplesRead;
   if(start < 0) start += allocated_mic_size;
 
+  short max_val = 0;
+  
   for (int i = 0; i < samplesRead; i++) {
     int idx = (start + i)%allocated_mic_size;
 
@@ -105,6 +107,8 @@ void test_mic() {
     last_noise = buffer[idx];
     #endif
 
+    max_val = max(max_val, buffer[idx]);
+    
     //buffer[idx] = buffer[idx] - BW_THRESHOLD_MICROPHONE;
     //if(popped) {
     //  buffer[idx] = -buffer[idx];
@@ -112,8 +116,10 @@ void test_mic() {
   }
   samplesRead = 0;
 
-  if (popped) digitalWrite(LED_BUILTIN, HIGH);
-  else digitalWrite(LED_BUILTIN, LOW);
+  //if (popped) digitalWrite(LED_BUILTIN, HIGH);
+  //else digitalWrite(LED_BUILTIN, LOW);
+
+  return max_val;
 }
 
 

@@ -81,7 +81,8 @@ public:
     digitalWrite(LED_BUILTIN, LOW);
     delay(200);
     digitalWrite(LED_BUILTIN, HIGH);
-    
+
+    Serial.println("P_X:");
     unsigned long delta = 1000000/frequency;
     unsigned long next_time = micros();
     
@@ -90,9 +91,32 @@ public:
       do {
         current_time = micros();
       } while(current_time < next_time);
-      interfaces[selected_interface]->function();
+      short p=0;
+      for(int j=0; j<interfaces[selected_interface]->funcCount; j++) {
+        short v = interfaces[selected_interface]->functions[j].function();
+        short off = interfaces[selected_interface]->functions[j].off;
+        short on = interfaces[selected_interface]->functions[j].on;
+        short tmp = v;
+        v = sigmoid_s(off, on, v);
+        /*Serial.print(off);
+        Serial.print(", ");
+        Serial.print(on);
+        Serial.print(", ");
+        Serial.print(tmp);
+        Serial.print(", ");
+        Serial.println(v);*/
+        v*= interfaces[selected_interface]->functions[j].weight;
+        p+=v;
+      }
+      Serial.println(p);
+      if(p>=interfaces[selected_interface]->threshold) {
+        digitalWrite(LED_BUILTIN, HIGH);
+      } else {
+        digitalWrite(LED_BUILTIN, LOW);
+      }
       next_time += delta;
     }
+    digitalWrite(LED_BUILTIN, HIGH);
     interfaces[selected_interface]->del();
     Serial.println(STOP_CHAR);
     delay(100);

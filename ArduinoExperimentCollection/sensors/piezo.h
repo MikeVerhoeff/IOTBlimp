@@ -26,15 +26,17 @@ class Piezo {
     last_value = analogRead(PIN);
   }
 
-  void test() {
+  short test() {
     buffer[head] = analogRead(PIN);
 
-    if(abs(last_value - buffer[head]) > THRESHOLD) 
-      digitalWrite(LED_BUILTIN, HIGH);
-    else digitalWrite(LED_BUILTIN, LOW);
+    //if(abs(last_value - buffer[head]) > THRESHOLD) 
+    //  digitalWrite(LED_BUILTIN, HIGH);
+    //else digitalWrite(LED_BUILTIN, LOW);
 
     last_value = buffer[head];
     head += 1;
+
+    return last_value;
   }
 
   

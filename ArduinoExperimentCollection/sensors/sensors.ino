@@ -14,27 +14,56 @@ Piezo         pie_flex(A1, 50);
 Piezo         pie_hard(A2, 500);
 Proximity     pro;
 
+short acc_off = 400;
+short acc_on =  200;
+
+short piezo_off = 700;
+short piezo_on =  900;
+
+short prox_off = 80;
+short prox_on = 150;
+
+short mic_off = 8000;
+short mic_on = 10000;
+
+
 // Semi-individual sensors
-SensorInterface imu_i ('b', "imu"     , [](int f, unsigned long t){   acc.init(f, t); gyr.init(f, t); }, [](){  acc.test(); gyr.test();     }, [](){  acc.del(); gyr.del(); });
-SensorInterface pie_f ('e', "pie_flex", [](int f, unsigned long t){   pie_flex.init(f, t);            }, [](){  pie_flex.test();            }, [](){  pie_flex.del();       });
-SensorInterface pie_h ('f', "pie_hard", [](int f, unsigned long t){   pie_hard.init(f, t);            }, [](){  pie_hard.test();            }, [](){  pie_hard.del();       });
-SensorInterface mic_i ('a', "mic"     , [](int f, unsigned long t){   init_mic(f, t);                 }, [](){  test_mic();                 }, [](){  del_mic();            });
-SensorInterface acc_i ('c', "acc"     , [](int f, unsigned long t){   acc.init(f, t);                 }, [](){  acc.test();                 }, [](){  acc.del();            });
-SensorInterface gyr_i ('d', "gyr"     , [](int f, unsigned long t){   gyr.init(f, t);                 }, [](){  gyr.test();                 }, [](){  gyr.del();            });
-SensorInterface pro_i ('g', "pro"     , [](int f, unsigned long t){   pro.init(f, t);                 }, [](){  pro.test();                 }, [](){  pro.del();            });
+SensorInterface imu_i ('b', "imu"     , [](int f, unsigned long t){   acc.init(f, t); gyr.init(f, t); }, TestInfo([](){ gyr.test(); return acc.test();     }, acc_off,   acc_on  ),    [](){  acc.del(); gyr.del(); });
+SensorInterface pie_f ('e', "pie_flex", [](int f, unsigned long t){   pie_flex.init(f, t);            }, TestInfo([](){ return pie_flex.test();            }, piezo_off, piezo_on),    [](){  pie_flex.del();       });
+SensorInterface pie_h ('f', "pie_hard", [](int f, unsigned long t){   pie_hard.init(f, t);            }, TestInfo([](){ return pie_hard.test();            }, piezo_off, piezo_on),    [](){  pie_hard.del();       });
+SensorInterface mic_i ('a', "mic"     , [](int f, unsigned long t){   init_mic(f, t);                 }, TestInfo([](){ return test_mic();                 }, mic_off,   mic_on  ),    [](){  del_mic();            });
+SensorInterface acc_i ('c', "acc"     , [](int f, unsigned long t){   acc.init(f, t);                 }, TestInfo([](){ return acc.test();                 }, acc_off,   acc_on  ),    [](){  acc.del();            });
+SensorInterface gyr_i ('d', "gyr"     , [](int f, unsigned long t){   gyr.init(f, t);                 }, TestInfo([](){ return gyr.test();                 }, acc_off,   acc_on  ),    [](){  gyr.del();            });
+SensorInterface pro_i ('g', "pro"     , [](int f, unsigned long t){   pro.init(f, t);                 }, TestInfo([](){ return pro.test();                 }, prox_off,  prox_on ),    [](){  pro.del();            });
 
 // Combinations
+TestInfo piezosTests[] = { 
+                          TestInfo((TestFunction) [](){return pie_flex.test();}, piezo_off, piezo_on, 1),
+                          TestInfo((TestFunction) [](){return pie_hard.test();}, piezo_off, piezo_on, 1)
+};
 SensorInterface piezos ('h', "piezos" , 
                         [](int f, unsigned long t){   pie_flex.init(f, t); pie_hard.init(f, t); }, 
-                        [](){                         pie_flex.test()    ; pie_hard.test()    ; }, 
+                        piezosTests, 2, 1800,
                         [](){                         pie_flex.del()     ; pie_hard.del()     ; });
+
+TestInfo piezo_imuTests[] = {
+                          TestInfo((TestFunction) [](){return pie_hard.test();}, piezo_off, piezo_on, 1),
+                          TestInfo((TestFunction) [](){return      acc.test();}, acc_off,   acc_on,   1)
+};
 SensorInterface piezos_imu ('i', "pie_hard/imu" , 
                         [](int f, unsigned long t){   pie_hard.init(f, t); acc.init(f, t); }, 
-                        [](){                         pie_hard.test()    ; acc.test()    ; }, 
+                        piezo_imuTests, 2, 1500,
                         [](){                         pie_hard.del()     ; acc.del()     ; });
+
+TestInfo allTests[] = {
+                          TestInfo((TestFunction) [](){return acc.test();      }, acc_off,   acc_on,   1),
+                          TestInfo((TestFunction) [](){return pie_hard.test(); }, piezo_off, piezo_on, 1),
+                          TestInfo((TestFunction) [](){return pro.test();      }, prox_off,  prox_on,  1),
+                          TestInfo((TestFunction) [](){return test_mic();      }, mic_off,   mic_on,   1)
+};
 SensorInterface all ('j', "all", 
                         [](int f, unsigned long t){   acc.init(f, t); pie_hard.init(f, t); pro.init(f, t); init_mic(f, t); },
-                        [](){                         acc.test()    ; pie_hard.test()    ; pro.test()    ; test_mic()    ; },
+                        allTests, 4, 3000,
                         [](){              del_mic(); acc.del()     ; pie_hard.del()     ; pro.del()     ; });
 
 void setup() {

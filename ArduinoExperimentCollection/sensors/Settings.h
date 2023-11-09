@@ -90,7 +90,7 @@ public:
     unsigned long next_time = micros();
     
     unsigned long current_time;
-    for(unsigned long i=0; i<n; i++) {
+    for(unsigned long i=0; i<n || n==0; i++) {
       do {
         current_time = micros();
       } while(current_time < next_time);
@@ -105,6 +105,12 @@ public:
         digitalWrite(LED_BUILTIN, LOW);
       }
       next_time += delta;
+      if(n==0 && Serial.available()>0) {
+        char c = Serial.read();
+        if(c=='e') {
+          break;
+        }
+      }
     }
     digitalWrite(LED_BUILTIN, HIGH);
     interfaces[selected_interface]->del();

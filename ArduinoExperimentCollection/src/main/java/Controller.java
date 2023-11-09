@@ -59,6 +59,9 @@ public class Controller {
     @FXML
     private ChoiceBox<Pair<SerialPort, String>> deviceSelector;
 
+    @FXML
+    private Button endButton;
+
     private SerialPort port;
     private OutputStream log;
     private String logFileName;
@@ -258,6 +261,7 @@ public class Controller {
             if (log != null) {
                 try {
                     if (end_found) {
+                        endButton.setDisable(true);
                         log.write(newData, 0, end_index);
                         log.close();
                         log = null;
@@ -360,6 +364,11 @@ public class Controller {
                     // time
                     startString.append("t"+timeCountField.getText());
                 }
+
+                if(timeCountField.getText().equals("0")) {
+                    endButton.setDisable(false);
+                }
+
                 prepareForNewSerialInput();
                 startString.append("-");
                 String command = startString.toString();
@@ -374,6 +383,12 @@ public class Controller {
                 //port.getOutputStream().write(new byte[]{'s'});
             }
         }
+    }
+
+    @FXML
+    void endAction(ActionEvent event) {
+        endButton.setDisable(true);
+        writeStringToPort("e");
     }
 
     public void onCloseWindow() {

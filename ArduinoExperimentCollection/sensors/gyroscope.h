@@ -11,6 +11,7 @@ const int THRESHOLD_ZG = 50;
 class Gyroscope {
   private:
   int head;
+  int offset;
 
   float* buff_x;
   float* buff_y;
@@ -19,6 +20,12 @@ class Gyroscope {
   public:
   Gyroscope() {}
   void init(int f, unsigned long t) {
+    offset = 1;
+    if(t==0) {
+      t=1;
+      offset = 0;
+    }
+    
     buff_x = (float*) calloc(t+1, sizeof(float));
     buff_y = (float*) calloc(t+1, sizeof(float));
     buff_z = (float*) calloc(t+1, sizeof(float));
@@ -39,7 +46,7 @@ class Gyroscope {
       buff_z[head] = buff_z[head-1];
     }
 
-    head += 1;
+    head += offset;
 
     return 0;
   }

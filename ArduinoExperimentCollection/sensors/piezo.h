@@ -10,6 +10,7 @@ class Piezo {
   const int THRESHOLD;
 
   int head;
+  int offset;
   int last_value;
 
   float* buffer;
@@ -18,6 +19,12 @@ class Piezo {
   Piezo(const int pin, const int threshold) : PIN(pin), THRESHOLD(threshold) {}
 
   void init(int f, unsigned long t) {
+    offset = 1;
+    if(t==0) {
+      t=1;
+      offset = 0;
+    }
+    
     buffer = (float*) calloc(t+1, sizeof(float));
 
     pinMode(PIN, INPUT);
@@ -34,7 +41,7 @@ class Piezo {
     //else digitalWrite(LED_BUILTIN, LOW);
 
     last_value = buffer[head];
-    head += 1;
+    head += offset;
 
     return last_value;
   }

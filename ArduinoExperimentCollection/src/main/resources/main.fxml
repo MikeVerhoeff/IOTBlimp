@@ -2,10 +2,9 @@
 
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
-<?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="720.0" prefWidth="1080.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controller">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="720.0" prefWidth="1080.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controller">
    <children>
       <ScrollPane fitToWidth="true" layoutX="291.0" layoutY="100.0" prefHeight="400.0" prefWidth="309.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="291.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <content>
@@ -84,6 +83,7 @@
                      </children>
                   </HBox>
                   <Button mnemonicParsing="false" onAction="#startAction" text="Start" />
+                  <Button fx:id="endButton" disable="true" mnemonicParsing="false" onAction="#endAction" text="End" />
                </children>
             </VBox>
          </children>

@@ -124,6 +124,11 @@ short test_mic() {
 
 
 void init_mic(int f, unsigned long n) {
+  
+  if(n==0) {
+    n = 256;
+  }
+  
   head = 0;
   samplesRead = 0;
   last_noise = 0;

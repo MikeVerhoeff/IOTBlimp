@@ -13,11 +13,18 @@ class Proximity {
   private:
   int* buffer;
   int head = 0;
+  int offset;
   int last_value;
 
   public:
 
   void init(int f, unsigned long t) {
+    offset = 1;
+    if(t==0) {
+      t=1;
+      offset = 0;
+    }
+    
     buffer = (int*) calloc(t+1, sizeof(int));
 
     head = 0;
@@ -35,7 +42,7 @@ class Proximity {
     //else digitalWrite(LED_BUILTIN, LOW);
 
     last_value = buffer[head];
-    head += 1;
+    head += offset;
 
     return last_value;
   }

@@ -77,7 +77,10 @@ public:
   void run_times(unsigned long n) {
     digitalWrite(LED_BUILTIN, HIGH);
     interfaces[selected_interface]->init(frequency, n);
-
+    for(int j=0; j<interfaces[selected_interface]->funcCount; j++) {
+      interfaces[selected_interface]->functions[j].reset();
+    }
+    
     digitalWrite(LED_BUILTIN, LOW);
     delay(200);
     digitalWrite(LED_BUILTIN, HIGH);
@@ -93,20 +96,7 @@ public:
       } while(current_time < next_time);
       short p=0;
       for(int j=0; j<interfaces[selected_interface]->funcCount; j++) {
-        short v = interfaces[selected_interface]->functions[j].function();
-        short off = interfaces[selected_interface]->functions[j].off;
-        short on = interfaces[selected_interface]->functions[j].on;
-        short tmp = v;
-        v = sigmoid_s(off, on, v);
-        /*Serial.print(off);
-        Serial.print(", ");
-        Serial.print(on);
-        Serial.print(", ");
-        Serial.print(tmp);
-        Serial.print(", ");
-        Serial.println(v);*/
-        v*= interfaces[selected_interface]->functions[j].weight;
-        p+=v;
+        p+=interfaces[selected_interface]->functions[j].run(current_time);
       }
       Serial.println(p);
       if(p>=interfaces[selected_interface]->threshold) {

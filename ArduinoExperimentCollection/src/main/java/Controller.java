@@ -142,29 +142,30 @@ public class Controller {
         List<Process> processes = new ArrayList<>(10);
         for(File scriptFile : scriptDir.listFiles()) {
             try {
-                System.out.println("Running script: "+scriptFile.getName());
-                ProcessBuilder processBuilder = new ProcessBuilder(
-                        pythonField.getText(), scriptFile.getAbsolutePath(),
-                        logFileName,
-                        "-f", frequencyField.getText(),
-                        timeCountToggleButton.isSelected()?"-c":"-t", timeCountField.getText(),
-                        "-i", interfaceSelector.getValue()==null?"NONE":interfaceSelector.getValue().value);
-                processBuilder.redirectErrorStream(true);
+                if (scriptFile.isFile()) {
+                    System.out.println("Running script: " + scriptFile.getName());
+                    ProcessBuilder processBuilder = new ProcessBuilder(
+                            pythonField.getText(), scriptFile.getAbsolutePath(),
+                            logFileName,
+                            "-f", frequencyField.getText(),
+                            timeCountToggleButton.isSelected() ? "-c" : "-t", timeCountField.getText(),
+                            "-i", interfaceSelector.getValue() == null ? "NONE" : interfaceSelector.getValue().value);
+                    processBuilder.redirectErrorStream(true);
 
-                processBuilder.directory(scriptRunDirectory);
+                    processBuilder.directory(scriptRunDirectory);
 
-                Process process = processBuilder.start();
+                    Process process = processBuilder.start();
 
-                new Thread(()->{
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                    reader.lines().<Runnable>map(line -> () -> {
-                        pythonOutputTextField.appendText(line);
-                        pythonOutputTextField.appendText("\n");
-                    }).forEach(Platform::runLater);
-                }).start();
+                    new Thread(() -> {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                        reader.lines().<Runnable>map(line -> () -> {
+                            pythonOutputTextField.appendText(line);
+                            pythonOutputTextField.appendText("\n");
+                        }).forEach(Platform::runLater);
+                    }).start();
 
-                processes.add(process);
-
+                    processes.add(process);
+                }
 
             } catch (Exception e) {
                 e.printStackTrace();

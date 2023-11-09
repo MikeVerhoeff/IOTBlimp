@@ -1,26 +1,5 @@
 #pragma once
 
-typedef short(*TestFunction)();
-
-struct TestInfo {
-
-  TestInfo(TestFunction function, short off, short on, short weight)
-    : function(function), off(off), on(on), weight(weight) {}
-
-  TestInfo(TestFunction function, short off, short on)
-    : function(function), off(off), on(on), weight(1) {}
-  
-  TestInfo()
-    : function(nullptr), off(0), on(0), weight(0) {}
-  
-  TestFunction function;
-  short off;
-  short on;
-  short weight;
-};
-
-typedef struct TestInfo TestInfo;
-
 float sigmoid_f(float x) {
   if(x < -1) {return 0;}
   if(x > 1 ) {return 1;}
@@ -43,6 +22,94 @@ short sigmoid_s(short off, short on, short x)
 {
   return sigmoid_s( (x - (on+off)/2) * 2 * 1000 / (on-off) );
 }
+
+typedef short(*TestFunction)();
+
+struct TestInfo {
+
+  TestInfo(TestFunction function, short off, short on, short weight)
+    : function(function), off(off), on(on), weight(weight) {}
+
+  TestInfo(TestFunction function, short off, short on)
+    : function(function), off(off), on(on), weight(1) {}
+
+  // use on off 2
+  TestInfo(TestFunction function, short off, short on, short on2, short off2, short weight)
+    : function(function), off(off), on(on), on2(on2), off2(off2), useonoff2(true), weight(weight) {}
+
+  TestInfo(TestFunction function, short off, short on, short on2, short off2)
+    : function(function), off(off), on(on), on2(on2), off2(off2), useonoff2(true), weight(1) {}
+
+  // default
+  TestInfo()
+    : function(nullptr), off(0), on(0), weight(0) {}
+  
+  TestFunction function;
+  short off;
+  short on;
+  short on2 = 0;
+  short off2 = 0;
+  short weight;
+  bool useonoff2 = false;
+
+  unsigned long on_time = 0;
+  unsigned long hold_time = 100000;
+  short last_value = 0;
+  bool used_last_value = false;
+
+  void reset() {
+    on_time = 0;
+    last_value = 0;
+    used_last_value = false;
+  }
+  
+  short run(unsigned long current_time) {
+    short v = function();
+    //short tmp = v;
+    if(useonoff2) {
+      if(v < on2) {
+        v = sigmoid_s(off, on, v);
+      } else {
+        v = sigmoid_s(off2, on2, v);
+      }
+    } else {
+      v = sigmoid_s(off, on, v);
+    }
+    /*Serial.print(off);
+    Serial.print(", ");
+    Serial.print(on);
+    Serial.print(", ");
+    Serial.print(tmp);
+    Serial.print(", ");
+    Serial.println(v);*/
+    v*= weight;
+    
+    bool in_hold_time = current_time - on_time < hold_time;
+    
+    bool value_larger = v>=last_value;
+
+    if(value_larger) {
+      last_value = v;
+      on_time = current_time;
+    }
+
+    if(in_hold_time) {
+      used_last_value = true;
+      return last_value;
+    }
+
+    if (used_last_value) {
+      used_last_value = false;
+      last_value = v;
+      on_time = current_time;
+    }
+    
+    return v;
+    
+  }
+};
+
+typedef struct TestInfo TestInfo;
 
 class SensorInterface {
 private:

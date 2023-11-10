@@ -23,8 +23,8 @@ short piezo_on =  900;
 short prox_off = 80;
 short prox_on = 150;
 
-short mic_off = 8000;
-short mic_on = 10000;
+short mic_off = 5000;
+short mic_on = 6000;
 
 
 // Semi-individual sensors

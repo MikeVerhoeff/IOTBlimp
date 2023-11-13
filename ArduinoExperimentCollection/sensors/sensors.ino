@@ -14,17 +14,17 @@ Piezo         pie_flex(A1, 50);
 Piezo         pie_hard(A2, 500);
 Proximity     pro;
 
-short acc_off = 400;
+short acc_off = 500;
 short acc_on =  200;
 
 short piezo_off = 700;
 short piezo_on =  900;
 
-short prox_off = 80;
-short prox_on = 150;
+short prox_off = 100;
+short prox_on = 200;
 
-short mic_off = 5000;
-short mic_on = 6000;
+short mic_off = 8000;
+short mic_on = 10000;
 
 
 // Semi-individual sensors
@@ -58,8 +58,8 @@ SensorInterface piezos_imu ('i', "pie_hard/imu" ,
 TestInfo allTests[] = {
                           TestInfo((TestFunction) [](){return acc.test();      }, acc_off,   acc_on,   1),
                           TestInfo((TestFunction) [](){return pie_hard.test(); }, piezo_off, piezo_on, 1),
-                          TestInfo((TestFunction) [](){return pro.test();      }, prox_off,  prox_on,  1),
-                          TestInfo((TestFunction) [](){return test_mic();      }, mic_off,   mic_on,   1)
+                          TestInfo((TestFunction) [](){return pro.test();      }, prox_off,  prox_on,  2),
+                          TestInfo((TestFunction) [](){return test_mic();      }, mic_off,   mic_on,   0)
 };
 SensorInterface all ('j', "all", 
                         [](int f, unsigned long t){   acc.init(f, t); pie_hard.init(f, t); pro.init(f, t); init_mic(f, t); },

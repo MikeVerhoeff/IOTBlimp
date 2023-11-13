@@ -2,7 +2,7 @@
 
 #include "SensorInterface.h"
 
-#define NUM_INTERFACES 10
+#define NUM_INTERFACES 15
 #define STOP_CHAR 'e'
 
 int MIC_BUFFER_SIZE = 1024;

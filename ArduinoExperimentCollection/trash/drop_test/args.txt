@@ -1,1 +1,0 @@
-save_args.py drop_test.txt -f 175 -t 5 -i acc

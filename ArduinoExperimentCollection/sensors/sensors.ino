@@ -10,15 +10,15 @@ Settings settings;
 
 Gyroscope     gyr;
 Accelerometer acc;
-Piezo         pie_flex(A1, 50);
-Piezo         pie_hard(A2, 500);
+Piezo         pie_flex(A2, 50);
+Piezo         pie_hard(A1, 500);
 Proximity     pro;
 
 short acc_off = 500;
 short acc_on =  200;
 
-short piezo_off = 700;
-short piezo_on =  900;
+short piezo_off = 300;
+short piezo_on =  700;
 
 short prox_off = 100;
 short prox_on = 200;
@@ -56,15 +56,26 @@ SensorInterface piezos_imu ('i', "pie_hard/imu" ,
                         [](){                         pie_hard.del()     ; acc.del()     ; });
 
 TestInfo allTests[] = {
-                          TestInfo((TestFunction) [](){return acc.test();      }, acc_off,   acc_on,   1),
-                          TestInfo((TestFunction) [](){return pie_hard.test(); }, piezo_off, piezo_on, 1),
-                          TestInfo((TestFunction) [](){return pro.test();      }, prox_off,  prox_on,  2),
+                          TestInfo((TestFunction) [](){return acc.test();      }, acc_off,   acc_on,   3),
+                          TestInfo((TestFunction) [](){return pie_hard.test(); }, piezo_off, piezo_on, 2),
+                          TestInfo((TestFunction) [](){return pro.test();      }, prox_off,  prox_on,  4),
                           TestInfo((TestFunction) [](){return test_mic();      }, mic_off,   mic_on,   0)
 };
 SensorInterface all ('j', "all", 
                         [](int f, unsigned long t){   acc.init(f, t); pie_hard.init(f, t); pro.init(f, t); init_mic(f, t); },
-                        allTests, 4, 3000,
+                        allTests, 4, 5000,
                         [](){              del_mic(); acc.del()     ; pie_hard.del()     ; pro.del()     ; });
+
+TestInfo allTestsFusion[] = {
+                          TestInfo((TestFunction) [](){return acc.test();      }, acc_off,   acc_on,   3),
+                          TestInfo((TestFunction) [](){return pie_hard.test(); }, piezo_off, piezo_on, 2),
+                          TestInfo((TestFunction) [](){return pro.test();      }, prox_off,  prox_on,  4)
+};
+SensorInterface fusion ('k', "fusion", 
+                        [](int f, unsigned long t){   acc.init(f, t); pie_hard.init(f, t); pro.init(f, t);},
+                        allTestsFusion, 3, 5000,
+                        [](){              acc.del()     ; pie_hard.del()     ; pro.del()     ; });
+
 
 void setup() {
   settings.addSensorInterface(&mic_i);
@@ -77,6 +88,7 @@ void setup() {
   settings.addSensorInterface(&piezos);
   settings.addSensorInterface(&piezos_imu);
   settings.addSensorInterface(&all);
+  settings.addSensorInterface(&fusion);
 
 
   Serial.begin(115200);

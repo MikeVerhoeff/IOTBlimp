@@ -5,6 +5,7 @@
 #include "piezo.h"
 #include "gyroscope.h"
 #include "accelerometer.h"
+#include "transform.h"
 
 Settings settings;
 
@@ -35,6 +36,7 @@ SensorInterface mic_i ('a', "mic"     , [](int f, unsigned long t){   init_mic(f
 SensorInterface acc_i ('c', "acc"     , [](int f, unsigned long t){   acc.init(f, t);                 }, TestInfo([](){ return acc.test();                 }, acc_off,   acc_on  ),    [](){  acc.del();            });
 SensorInterface gyr_i ('d', "gyr"     , [](int f, unsigned long t){   gyr.init(f, t);                 }, TestInfo([](){ return gyr.test();                 }, acc_off,   acc_on  ),    [](){  gyr.del();            });
 SensorInterface pro_i ('g', "pro"     , [](int f, unsigned long t){   pro.init(f, t);                 }, TestInfo([](){ return pro.test();                 }, prox_off,  prox_on ),    [](){  pro.del();            });
+SensorInterface clu_i ('t', "Toggle Clutch", [](int f, unsigned long t){transform_init(f, t);         }, TestInfo([](){ return tranfrom_test();            }, 100,       200     ),    [](){  transfrom_delete();   });
 
 // Combinations
 TestInfo piezosTests[] = { 
@@ -89,6 +91,7 @@ void setup() {
   settings.addSensorInterface(&piezos_imu);
   settings.addSensorInterface(&all);
   settings.addSensorInterface(&fusion);
+  settings.addSensorInterface(&clu_i);
 
 
   Serial.begin(115200);

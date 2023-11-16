@@ -36,7 +36,9 @@ SensorInterface mic_i ('a', "mic"     , [](int f, unsigned long t){   init_mic(f
 SensorInterface acc_i ('c', "acc"     , [](int f, unsigned long t){   acc.init(f, t);                 }, TestInfo([](){ return acc.test();                 }, acc_off,   acc_on  ),    [](){  acc.del();            });
 SensorInterface gyr_i ('d', "gyr"     , [](int f, unsigned long t){   gyr.init(f, t);                 }, TestInfo([](){ return gyr.test();                 }, acc_off,   acc_on  ),    [](){  gyr.del();            });
 SensorInterface pro_i ('g', "pro"     , [](int f, unsigned long t){   pro.init(f, t);                 }, TestInfo([](){ return pro.test();                 }, prox_off,  prox_on ),    [](){  pro.del();            });
-SensorInterface clu_i ('t', "Toggle Clutch", [](int f, unsigned long t){transform_init(f, t);         }, TestInfo([](){ return tranfrom_test();            }, 100,       200     ),    [](){  transfrom_delete();   });
+SensorInterface clu_i ('t', "Toggle Clutch", transform_init, TestInfo(tranfrom_test, 100,       200     ),transfrom_delete);
+SensorInterface clu1_i ('1', "Couple", transform_void_init, TestInfo(couple_clutch, 100,       200     ),transform_void_delete);
+SensorInterface clu2_i ('2', "Un-Couple", transform_void_init, TestInfo(couple_unclutch, 100,       200     ),transform_void_delete);
 
 // Combinations
 TestInfo piezosTests[] = { 
@@ -92,6 +94,8 @@ void setup() {
   settings.addSensorInterface(&all);
   settings.addSensorInterface(&fusion);
   settings.addSensorInterface(&clu_i);
+  settings.addSensorInterface(&clu1_i);
+  settings.addSensorInterface(&clu2_i);
 
 
   Serial.begin(115200);

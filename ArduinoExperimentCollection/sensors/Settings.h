@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SensorInterface.h"
+#include "transform.h"
 
 #define NUM_INTERFACES 15
 #define STOP_CHAR 'e'
@@ -101,6 +102,7 @@ public:
       Serial.println(p);
       if(p>=interfaces[selected_interface]->threshold) {
         digitalWrite(LED_BUILTIN, HIGH);
+        couple_unclutch();
       } else {
         digitalWrite(LED_BUILTIN, LOW);
       }

@@ -1,0 +1,3 @@
+Sticking some material (cap of super glue or handle of transparent screw driver) might give a short a bit higher reading
+An bright IR led can set the semsor off, but it needs to be aimed correctly for it to stay on witch i could only reliably do using thed indicator led
+IR led goes to 255, normal condition don't -> prob 0 at 255

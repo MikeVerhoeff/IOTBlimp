@@ -10,7 +10,7 @@ import math
 
 #config
 hideHists = False
-hideFit = True
+hideFit = False
 
 
 def mic_filter(y):

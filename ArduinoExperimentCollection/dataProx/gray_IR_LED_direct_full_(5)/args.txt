@@ -1,0 +1,1 @@
+save_args.py gray_IR_LED_direct_(5).txt -f 250 -t 5 -i pro

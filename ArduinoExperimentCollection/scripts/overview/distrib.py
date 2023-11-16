@@ -8,6 +8,11 @@ import matplotlib.pyplot as plt
 from types import ModuleType
 import math
 
+#config
+hideHists = False
+hideFit = True
+
+
 def mic_filter(y):
     b = [9.62491303e-07, 1.92498261e-06, 9.62491303e-07]
     a = [-1, 1.9972232,  -0.99722705]
@@ -116,7 +121,7 @@ def fit_normal(results, color='g', label=None, onlyLines=False, doFit=True, doHi
     p = norm.pdf(x, mu, std)
     
     
-    if doHist:
+    if doHist and not hideHists:
         if scaleToOne:
             plt.hist(results, bins=bins, density=False, alpha=0.6, color=color, label=label, weights=0.1*np.ones_like(results))
         else:
@@ -127,21 +132,22 @@ def fit_normal(results, color='g', label=None, onlyLines=False, doFit=True, doHi
         scale = std * math.sqrt(2*math.pi)
         p = p * scale
     
-    if doFit:
+    if doFit and not hideFit:
         lbl = None
         if onlyLines and label != None:
             lbl=label #+" (mu = %.2f,  std = %.2f)" % (mu, std)
         alpha = 1
         if doFit and onlyLines and not doHist:
             alpha = 0.6
-        if doHist:
+        if doHist and not hideHists:
             if lbl!=None:
                 lbl="_"+lbl
             plt.plot(x, p, 'k', color=color, label=lbl, alpha=alpha)
         else:
             plt.plot(x, p, 'k', color=color, label=lbl, alpha=alpha)
-        
-    print(label, "Fit results: mu = %.2f,  std = %.2f" % (mu, std))
+    
+    
+    print(" - ", label, "Fit results: mu = %.2f,  std = %.2f" % (mu, std))
     
     if not onlyLines:
         title = "Fit results: mu = %.2f,  std = %.2f" % (mu, std)
@@ -187,7 +193,12 @@ def plotDone(file, legend=True):
     print()
     if not legend:
         plt.gca().get_legend().remove()
-    plt.savefig(file)
+    if hideFit:
+        plt.savefig("hists/"+file)
+    elif hideHists:
+        plt.savefig("fit/"+file)
+    else:
+        plt.savefig(file)
     plt.show()
     plt.clf()
 
@@ -509,20 +520,57 @@ def main():
             
             plotInfo("Piezo: Hitting ballon in diffrent positions", "maximal sensor value per run", "probability density")
             
-            xlim = [0, 1000]
-            ylim = [0, 0.025]
-            bins = list(range(0,1000, 30))
+            ylim = [0, 0.018]
+            xlim = [0,1023]
+            bins = np.bins = np.linspace(xlim[0], xlim[1], num=25)
             
-            results, ts, fs = getSignals("../../dataPiezo", "nerf_disk_side", "PIEZO", lambda x: fold(max, 0, x[1:]))
-            fit_normal(results, onlyLines=True, label="Nerf Vortex Disk Hit, side",            color='orange', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            results1, ts, fs = getSignals("../../dataPiezo", "nerf_disk_side", "PIEZO", lambda x: fold(max, 0, x[1:]))
+            results2, ts, fs = getSignals("../../dataPiezo", "nerf_direct_hit", "PIEZO", lambda x: fold(max, 0, x[1:]))
+            results3, ts, fs = getSignals("../../dataPartyBalloonPiezo/100K-PiozoHard-tapenormal", "PiezoH_pop", "PIEZO", lambda x: fold(max, 0, x[1:]))
             
-            results, ts, fs = getSignals("../../dataPiezo", "nerf_direct_hit", "PIEZO", lambda x: fold(max, 0, x[1:]))
-            fit_normal(results, onlyLines=True, label="Nerf Vortex Disk Hit, close to sensor", color='r',      doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            results4a, ts, fs = getSignals("../../pop", "piezo", "PIEZO", lambda x: fold(max, 0, x[1:]))
+            results4b, ts, fs = getSignals("../../pop", "all", "PIEZO", lambda x: fold(max, 0, x[1:]))
+            results4b.pop(2) # 14
+            #results4b.pop(8) # 8
+            #results4b.pop(6) # 6
+            results4c, ts, fs = getSignals("../../pop", "fusion", "PIEZO", lambda x: fold(max, 0, x[1:]))
+            results4 = results4a+results4b+[results4c[0], results4c[1]]
             
-            results, ts, fs = getSignals("../../dataPartyBalloonPiezo/100K-PiozoHard-tapenormal", "PiezoH_pop", "PIEZO", lambda x: fold(max, 0, x[1:]))
-            fit_normal(results, onlyLines=True, label="Small Balloon Popping (4 runs)",        color='purple', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            print()
+            print(results4)
+            print()
+            
+            
+            fit_normal(results1, onlyLines=True, label="Nerf Vortex Disk Hit, side",            color='orange', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            fit_normal(results2, onlyLines=True, label="Nerf Vortex Disk Hit, close to sensor", color='r',      doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            fit_normal(results3, onlyLines=True, label="Small Balloon Popping (4 runs)",        color='purple', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            #fit_normal(results4, onlyLines=True, label="Big Balloon Popping (Sensor degradating)", color='blue', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            
             
             plotDone('piezo_nerf.png')
+            
+            plotInfo("Piezo: Hitting ballon in diffrent positions", "maximal sensor value per run", "probability density")
+            fit_normal(results1, onlyLines=True, label="Nerf Vortex Disk Hit, side",            color='orange', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            fit_normal(results2, onlyLines=True, label="Nerf Vortex Disk Hit, close to sensor", color='r',      doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            fit_normal(results3, onlyLines=True, label="Small Balloon Popping (4 runs)",        color='purple', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            fit_normal(results4, onlyLines=True, label="Big Balloon Popping (Sensor degradating)", color='blue', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            plotDone('piezo_nerf_plus_big.png')
+            
+            plotInfo("Piezo: Hitting ballon in diffrent positions", "maximal sensor value per run", "probability density")
+            fit_normal(results1, onlyLines=True, label="Nerf Vortex Disk Hit, side",            color='orange', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            plotDone('piezo_nerf_side.png')
+            
+            plotInfo("Piezo: Hitting ballon in diffrent positions", "maximal sensor value per run", "probability density")
+            fit_normal(results2, onlyLines=True, label="Nerf Vortex Disk Hit, close to sensor", color='r',      doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            plotDone('piezo_nerf_on.png')
+            
+            plotInfo("Piezo: Hitting ballon in diffrent positions", "maximal sensor value per run", "probability density")
+            fit_normal(results3, onlyLines=True, label="Small Balloon Popping (4 runs)",        color='purple', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            plotDone('piezo_nerf_small.png')
+            
+            plotInfo("Piezo: Hitting ballon in diffrent positions", "maximal sensor value per run", "probability density")
+            fit_normal(results4, onlyLines=True, label="Big Balloon Popping (Sensor degradating)", color='blue', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            plotDone('piezo_nerf_big.png')
             
             #-----------------------------------------------------------------------------------------------------------
             
@@ -571,7 +619,6 @@ def main():
             results5, ts, fs = getSignals("../../fp_tests", "fp_bookside",    "ACC", lambda x: fold(min, 2**32, x[1:]))
             results6, ts, fs = getSignals("../../fp_tests", "fp_book",        "ACC", lambda x: fold(min, 2**32, x[1:]))
             results7, ts, fs = getSignals("../../fp_tests", "fp_nerf",        "ACC", lambda x: fold(min, 2**32, x[1:]))
-            
             
             fit_normal(results1, onlyLines=True, label="Moving Side to Side (+/- 1 m/s)",  color='orange', doFit=True, xlim=xlim, bins=bins)
             fit_normal(results2, onlyLines=True, label="Moving Up and Down (+/- 1 m/s)",   color='r',      doFit=True, xlim=xlim, bins=bins)
@@ -633,6 +680,10 @@ def main():
             results1, ts, fs = getSignals("../../acc", "fp_1ms_up_down", "ACC", lambda x: fold(min, 2**32, x[1:]))
             results2, ts, fs = getSignals("../../fp_tests", "baseline_motor", "ACC", lambda x: fold(min, 2**32, x[1:]))
             results3, ts, fs = getSignals("../../pop", "all", "ACC", lambda x: fold(min, 2**32, x[1:]))
+            results3.pop(2) #14 -> did not fall/stationary on table
+            results3b, ts, fs = getSignals("../../pop", "fusion", "ACC", lambda x: fold(min, 2**32, x[1:]))
+            results3c, ts, fs = getSignals("../../pop", "acc", "ACC", lambda x: fold(min, 2**32, x[1:]))
+            results3 = results3+results3b+results3c
             
             fit_normal(results1, onlyLines=True, label="Moving Up and Down (+/- 1 m/s)",   color='r',      doFit=True, xlim=xlim, bins=bins)
             fit_normal(results2, onlyLines=True, label="Drone Motors on, stationary",           color='purple', doFit=True, xlim=xlim, bins=bins)
@@ -665,31 +716,42 @@ def main():
             
             # MIC pop
             
-            plt.title("Microphone: Pop Balloon at Diffrent Distances")
+            plotInfo("Microphone: Pop Balloon at Diffrent Distances", "maximal microphone value", "probebility (‰)")
+            
+            #todo: add new ones
             
             xlim = [-1000, 14000]
             bins=np.linspace(xlim[0], xlim[1], num=30)
+            ylim = [0, 0.002]
             
             #results, ts, fs = getSignals("../../fp_tests", "fp_1m", "MIC", lambda x: x)
             #results = list(map(mic_filter, results))
             #results = list(map(lambda x: fold(max, -2**16, x[1:]), results))
             #fit_normal(results, onlyLines=True, label="pop at 1m")
             
-            results, ts, fs = getSignals("../../dataMic", "still_filtered", "MIC", lambda x: fold(max, -2**16, x[1:]))
-            fit_normal(results, onlyLines=True, label="stationary (motors off)", color='b', scaleToOne=True, xlim=xlim, bins=bins)
+            results1, ts, fs = getSignals("../../dataMic", "still_filtered",     "MIC", lambda x: fold(max, -2**16, x[1:]))
+            results2, ts, fs = getSignals("../../dataMic", "300hz_filtered",     "MIC", lambda x: fold(max, -2**16, x[1:]))
+            results3, ts, fs = getSignals("../../dataMic", "150cm_pop_filtered", "MIC", lambda x: fold(max, -2**16, x[1:]))
+            results3b, ts, fs = getSignals("../../fp",     "150cm_pop_filtered", "MIC", lambda x: fold(max, -2**16, x[1:]))
+            results3 = results3+results3b
+            results4, ts, fs = getSignals("../../dataMic", "30cm_pop_filtered",  "MIC", lambda x: fold(max, -2**16, x[1:]))
+            results4b, ts, fs = getSignals("../../fp",     "30cm_pop_filtered",  "MIC", lambda x: fold(max, -2**16, x[1:]))
+            results4 = results4+results4b
             
-            results, ts, fs = getSignals("../../dataMic", "300hz_filtered", "MIC", lambda x: fold(max, -2**16, x[1:]))
-            fit_normal(results, onlyLines=True, label="300Hz tone",         color='g',      scaleToOne=True, xlim=xlim, bins=bins)
-            
-            results, ts, fs = getSignals("../../dataMic", "150cm_pop_filtered", "MIC", lambda x: fold(max, -2**16, x[1:]))
-            fit_normal(results, onlyLines=True, label="pop ballon @ 150cm", color='orange', scaleToOne=True, xlim=xlim, bins=bins)
-            
-            results, ts, fs = getSignals("../../dataMic", "30cm_pop_filtered", "MIC", lambda x: fold(max, -2**16, x[1:]))
-            fit_normal(results, onlyLines=True, label="pop ballon @ 30cm",  color='r',      scaleToOne=True, xlim=xlim, bins=bins)
+            fit_normal(results1, onlyLines=True, label="stationary (motors off)", color='b', scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
+            fit_normal(results2, onlyLines=True, label="300Hz tone",         color='g',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
+            fit_normal(results3, onlyLines=True, label="pop ballon @ 150cm", color='orange', scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
+            fit_normal(results4, onlyLines=True, label="pop ballon @ 40cm",  color='r',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
             
             pop_results = []
+            results, ts, fs = getSignals("../../pop", "all", "MIC", lambda x: fold(max, -2**16, x[1:]))
+            pop_results.append(results[0])#
             results, ts, fs = getSignals("../../pop", "all_(2)", "MIC", lambda x: fold(max, -2**16, x[1:]))
             pop_results.append(results[0])
+            results, ts, fs = getSignals("../../pop", "all_(3)", "MIC", lambda x: fold(max, -2**16, x[1:]))
+            pop_results.append(results[0])#
+            results, ts, fs = getSignals("../../pop", "all_(4)", "MIC", lambda x: fold(max, -2**16, x[1:]))
+            pop_results.append(results[0])#
             results, ts, fs = getSignals("../../pop", "all_(5)", "MIC", lambda x: fold(max, -2**16, x[1:]))
             pop_results.append(results[0])
             results, ts, fs = getSignals("../../pop", "all_(6)", "MIC", lambda x: fold(max, -2**16, x[1:]))
@@ -703,53 +765,129 @@ def main():
             pop_results.append(results[0])
             pop_results.append(results[1])
             pop_results.append(results[3])
-            fit_normal(pop_results, onlyLines=True, label="pop own ballon (motor on)",  color='purple',      scaleToOne=True, xlim=xlim, bins=bins)
+            fit_normal(pop_results, onlyLines=True, label="pop own ballon (motor on)",  color='purple',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
             
             #results, ts, fs = getSignals("../../fp_tests", "baseline_motor", "MIC", lambda x: x)
             #results = list(map(mic_filter, results))
             #results = list(map(lambda x: fold(max, -2**16, x[1:]), results))
             #fit_normal(results, onlyLines=True, label="Drone Motors")
             
-            plt.savefig('mic_dists.png')
-            plt.show()
-            plt.clf()
+            y_vals = plt.gca().get_yticks()
+            plt.gca().set_yticklabels([str(x*10**3) for x in y_vals])
+            
+            plotDone('mic_dists.png')
+            
+            
+            plotInfo("Microphone: Pop Balloon at Diffrent Distances", "maximal microphone value", "probebility (‰)")
+            fit_normal(results1, onlyLines=True, label="stationary (motors off)", color='b', scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
+            y_vals = plt.gca().get_yticks()
+            plt.gca().set_yticklabels([str(x*10**3) for x in y_vals])
+            plotDone('mic_dists_still.png')
+            
+            plotInfo("Microphone: Pop Balloon at Diffrent Distances", "maximal microphone value", "probebility (‰)")
+            fit_normal(results2, onlyLines=True, label="300Hz tone",         color='g',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
+            y_vals = plt.gca().get_yticks()
+            plt.gca().set_yticklabels([str(x*10**3) for x in y_vals])
+            plotDone('mic_dists_300hz.png')
+            
+            plotInfo("Microphone: Pop Balloon at Diffrent Distances", "maximal microphone value", "probebility (‰)")
+            fit_normal(results3, onlyLines=True, label="pop ballon @ 150cm", color='orange', scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
+            y_vals = plt.gca().get_yticks()
+            plt.gca().set_yticklabels([str(x*10**3) for x in y_vals])
+            plotDone('mic_dists_150.png')
+            
+            plotInfo("Microphone: Pop Balloon at Diffrent Distances", "maximal microphone value", "probebility (‰)")
+            fit_normal(results4, onlyLines=True, label="pop ballon @ 40cm",  color='r',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
+            y_vals = plt.gca().get_yticks()
+            plt.gca().set_yticklabels([str(x*10**3) for x in y_vals])
+            plotDone('mic_dists_40.png')
+            
+            plotInfo("Microphone: Pop Balloon at Diffrent Distances", "maximal microphone value", "probebility (‰)")
+            fit_normal(pop_results, onlyLines=True, label="pop own ballon (motor on)",  color='purple',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
+            y_vals = plt.gca().get_yticks()
+            plt.gca().set_yticklabels([str(x*10**3) for x in y_vals])
+            plotDone('mic_dists_pop.png')
             
             #-----------------------------------------------------------------------------------------------------------
             
             # mic noize
             
-            plt.title("Microphone: Value distribution Filtered vs Unfiltered")
+            plotInfo("Microphone: Value distribution Filtered vs Unfiltered", "maximal microphone value", "probebility (‰)")
             
             xlim = [-14000, 14000]
             bins=np.linspace(xlim[0], xlim[1], num=100)
             
-            results, ts, fs = getSignals("../../fp_tests", "baseline_motor", "MIC", lambda x: x)
-            fit_normal(flatten(results), onlyLines=True, label="Unfiltered (motors on, still)", color='r', xlim=xlim, bins=bins)
-            results = list(map(mic_filter, results))
-            fit_normal(flatten(results), onlyLines=True, label="Filtered (motors on, still)", color='g', xlim=xlim, bins=bins)
+            results1, ts, fs = getSignals("../../fp_tests", "baseline_motor", "MIC", lambda x: x)
+            results2 = list(map(mic_filter, results1))
             
-            plt.savefig('mic_noize.png')
-            plt.show()
-            plt.clf()
+            fit_normal(flatten(results1), onlyLines=True, label="Unfiltered motor noise", color='r', xlim=xlim, bins=bins)
+            fit_normal(flatten(results2), onlyLines=True, label="Filtered motor noise", color='g', xlim=xlim, bins=bins)
+            
+            y_vals = plt.gca().get_yticks()
+            plt.gca().set_yticklabels(['{:3.1f}'.format(x*10**3) for x in y_vals])
+            
+            plotDone('mic_noize.png')
+            
+            
+            plotInfo("Microphone: Value distribution Filtered vs Unfiltered", "maximal microphone value", "probebility (‰)")
+            fit_normal(flatten(results1), onlyLines=True, label="Unfiltered motor noise", color='r', xlim=xlim, bins=bins)
+            y_vals = plt.gca().get_yticks()
+            plt.gca().set_yticklabels(['{:3.1f}'.format(x*10**3) for x in y_vals])
+            plotDone('mic_noize_unfiltered.png')
+            
+            plotInfo("Microphone: Value distribution Filtered vs Unfiltered", "maximal microphone value", "probebility (‰)")
+            fit_normal(flatten(results2), onlyLines=True, label="Filtered motor noise", color='g', xlim=xlim, bins=bins)
+            y_vals = plt.gca().get_yticks()
+            plt.gca().set_yticklabels(['{:3.1f}'.format(x*10**3) for x in y_vals])
+            plotDone('mic_noize_filtered.png')
             
             #-----------------------------------------------------------------------------------------------------------
             
             # Example of effect fillter
             
-            plt.title("Microphone: Effect of Filter When Balloon Pops")
+            plotInfo("Microphone: Effect of Filter When Balloon Pops", "time (s)", "microphone value")
             
-            results, ts, fs = getSignals("../../../Sound detection/", "data_formated", "MIC", lambda x: x)
+            results1, ts, fs = getSignals("../../../Sound detection/", "data_formated", "MIC", lambda x: x)
+            results2 = list(map(mic_filter, results1))
             
             t = 2
-            #plt.plot(results[0][:32000], label="Un Filtered", color='r')
-            plt.plot(np.linspace(0, t, len(results[0][:32000])), results[0][:32000], label="Un Filtered", color='r')
             
-            results = list(map(mic_filter, results))
-            plt.plot(np.linspace(0, t, len(results[0][:32000])), results[0][:32000], label="Filltered", color='b')
+            plt.plot(np.linspace(0, t, len(results1[0][:32000])), results1[0][:32000], label="Un Filtered", color='r')
+            plt.plot(np.linspace(0, t, len(results2[0][:32000])), results2[0][:32000], label="Filltered", color='b')
             
-            plt.savefig('mic_filter_example.png')
-            plt.show()
-            plt.clf()
+            y_vals = plt.gca().get_yticks()
+            plt.gca().set_yticklabels([('{:3.0f}K'.format(x/10**3) if x!=0 else '0') for x in y_vals])
+            
+            plotDone('mic_filter_example.png')
+            
+            
+            plotInfo("Microphone: Effect of Filter When Balloon Pops", "time (s)", "microphone value")
+            plt.plot(np.linspace(0, t, len(results1[0][:32000])), results1[0][:32000], label="Un Filtered", color='r')
+            y_vals = plt.gca().get_yticks()
+            plt.gca().set_yticklabels([('{:3.0f}K'.format(x/10**3) if x!=0 else '0') for x in y_vals])
+            plotDone('mic_filter_example_unfiltred.png')
+            
+            plotInfo("Microphone: Effect of Filter When Balloon Pops", "time (s)", "microphone value")
+            plt.plot(np.linspace(0, t, len(results2[0][:32000])), results2[0][:32000], label="Filltered", color='b')
+            y_vals = plt.gca().get_yticks()
+            plt.gca().set_yticklabels([('{:3.0f}K'.format(x/10**3) if x!=0 else '0') for x in y_vals])
+            plotDone('mic_filter_example_filtred.png')
+            
+            
+            #-----------------------------------------------------------------------------------------------------------
+            
+            plotInfo("Microphone: Pop Spectrogram", "time (s)", "frequency")
+            
+            results, ts, fs = getSignals("../../../Sound detection/", "data_formated", "MIC", lambda x: x)
+            t = 2
+            result = results[0][:32000]
+            
+            plt.specgram(result, NFFT=1024, Fs=16000)
+            
+            y_vals = plt.gca().get_yticks()
+            plt.gca().set_yticklabels([('{:3.0f}KHz'.format(x/10**3) if x!=0 else '0KHz') for x in y_vals])
+            
+            plotDone('mic_spectrogram.png')
             
             #-----------------------------------------------------------------------------------------------------------
     #mean = statistics.mean(results)

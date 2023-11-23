@@ -11,6 +11,7 @@ import math
 #config
 hideHists = False
 hideFit = False
+dontShow = False
 
 
 def mic_filter(y):
@@ -199,7 +200,8 @@ def plotDone(file, legend=True):
         plt.savefig("fit/"+file)
     else:
         plt.savefig(file)
-    plt.show()
+    if not dontShow:
+        plt.show()
     plt.clf()
 
 def flatten(l):
@@ -211,7 +213,7 @@ def main():
     
     if len(sys.argv) < 5 and len(sys.argv) !=2:
         print("Expected atleast 4 arguments or exectly 2")
-        print("usage: python distrib.py <folder> <partial expiriment name> <sensor name> <vals/max/min>")
+        print("usage: python distrib.py <folder> <partial expiriment name> <sensor name> <vals/max/min> [filter]")
         print("or   : python distrib.py <sensor name: PROX/PIEZO/ACC/MIC>")
         exit(1)
     
@@ -235,14 +237,14 @@ def main():
         elif sys.argv[4] == "max":
             results, ts, fs = getSignals(sys.argv[1], sys.argv[2], sys.argv[3], lambda x: fold(max, -2**16, x[1:]))
             if len(sys.argv)>=6 and sys.argv[5]=="filter":
-                results = list(map(mic_fillter, results))
+                results = list(map(mic_filter, results))
             fit_normal(results)
             
             
         elif sys.argv[4] == "min":
             results, ts, fs = getSignals(sys.argv[1], sys.argv[2], sys.argv[3], lambda x: fold(min, 2**32, x[1:]))
             if len(sys.argv)>=6 and sys.argv[5]=="filter":
-                results = list(map(mic_fillter, results))
+                results = list(map(mic_filter, results))
             fit_normal(results)
         
     else:
@@ -481,6 +483,7 @@ def main():
             results2, ts, fs = getSignals("../../fp_tests", "fp_bookface_soft", "PIEZO", lambda x: fold(max, 0, x[1:]))
             results3, ts, fs = getSignals("../../fp_tests", "fp_bookside_non",  "PIEZO", lambda x: fold(max, 0, x[1:]))
             results4, ts, fs = getSignals("../../fp_tests", "fp_bookside_on",   "PIEZO", lambda x: fold(max, 0, x[1:]))
+            results5, ts, fs = getSignals("../../fp_tests", "baseline_motor", "PIEZO", lambda x: fold(max, 0, x[1:]))
             
             fit_normal(results1, onlyLines=True, label="Drone Motors Off",       color='g',      ylim=[0, 0.15], xlim=xlim, bins=bins)
             fit_normal(results2, onlyLines=True, label="Bookface Soft",          color='r',      ylim=[0, 0.15], xlim=xlim, bins=bins)
@@ -492,10 +495,31 @@ def main():
             plotDone('piezo_book.png')
             
             plotInfo("Piezo: Book Hits", "maximal sensor value per run", "probability density")
+            fit_normal(results5, onlyLines=True, label="Drone Motors On",       color='purple',      ylim=[0, 0.15], xlim=xlim, bins=bins)
+            fit_normal(results2, onlyLines=True, label="Bookface Soft",          color='r',      ylim=[0, 0.15], xlim=xlim, bins=bins)
+            fit_normal(results3, onlyLines=True, label="Bookside not on Sensor", color='orange', ylim=[0, 0.15], xlim=xlim, bins=bins)
+            fit_normal(results4, onlyLines=True, label="Bookside on Sensor",     color='blue',   ylim=[0, 0.15], xlim=xlim, bins=bins)
+            plt.legend(loc='upper right')
+            plotDone('piezo_book_2.png')
+            
+            plotInfo("Piezo: Book Hits", "maximal sensor value per run", "probability density")
+            fit_normal(results1, onlyLines=True, label="Drone Motors Off",       color='g',      ylim=[0, 0.15], xlim=xlim, bins=bins)
+            fit_normal(results5, onlyLines=True, label="Drone Motors On",       color='purple',      ylim=[0, 0.15], xlim=xlim, bins=bins)
+            fit_normal(results2, onlyLines=True, label="Bookface Soft",          color='r',      ylim=[0, 0.15], xlim=xlim, bins=bins)
+            fit_normal(results3, onlyLines=True, label="Bookside not on Sensor", color='orange', ylim=[0, 0.15], xlim=xlim, bins=bins)
+            fit_normal(results4, onlyLines=True, label="Bookside on Sensor",     color='blue',   ylim=[0, 0.15], xlim=xlim, bins=bins)
+            plt.legend(loc='upper right')
+            plotDone('piezo_book_3.png')
+            
+            plotInfo("Piezo: Book Hits", "maximal sensor value per run", "probability density")
             fit_normal(results1, onlyLines=True, label="Drone Motors Off",       color='g',      ylim=[0, 0.15], xlim=xlim, bins=bins)
             plt.legend(loc='upper right')
             plotDone('piezo_Motors_off_2.png')
             
+            plotInfo("Piezo: Book Hits", "maximal sensor value per run", "probability density")
+            fit_normal(results5, onlyLines=True, label="Drone Motors On",       color='purple',      ylim=[0, 0.15], xlim=xlim, bins=bins)
+            plt.legend(loc='upper right')
+            plotDone('piezo_Motors_on_2.png')
             
             plotInfo("Piezo: Book Hits", "maximal sensor value per run", "probability density")
             fit_normal(results2, onlyLines=True, label="Bookface Soft",          color='r',      ylim=[0, 0.15], xlim=xlim, bins=bins)
@@ -622,7 +646,7 @@ def main():
             
             fit_normal(results1, onlyLines=True, label="Moving Side to Side (+/- 1 m/s)",  color='orange', doFit=True, xlim=xlim, bins=bins)
             fit_normal(results2, onlyLines=True, label="Moving Up and Down (+/- 1 m/s)",   color='r',      doFit=True, xlim=xlim, bins=bins)
-            fit_normal(results3, onlyLines=True, label="Drone Motors on, Still",           color='purple', doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results3, onlyLines=True, label="Drone Motors on, stationary",           color='purple', doFit=True, xlim=xlim, bins=bins)
             #fit_normal(results4, onlyLines=True, label="Hit with Face of Book",            color='green', doFit=True, xlim=xlim, bins=bins)
             #fit_normal(results5, onlyLines=True, label="Hit with Side of Book",            color='blue', doFit=True, xlim=xlim, bins=bins)
             fit_normal(results6, onlyLines=True, label="Hit with a Book",            color='green', doFit=True, xlim=xlim, bins=bins)
@@ -644,7 +668,7 @@ def main():
             plotDone('acc_move_ud.png')
             
             plotInfo("Accelerometer: Movement", "minimum length of measured acceleration vector per run", "probability density")
-            fit_normal(results3, onlyLines=True, label="Drone Motors on, Still",           color='purple', doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results3, onlyLines=True, label="Drone Motors on, stationary",           color='purple', doFit=True, xlim=xlim, bins=bins)
             plt.legend(loc='upper left')
             plotDone('acc_move_mon.png')
             
@@ -654,7 +678,7 @@ def main():
             plotDone('acc_move_book_face.png')
             
             plotInfo("Accelerometer: Movement", "minimum length of measured acceleration vector per run", "probability density")
-            fit_normal(results5, onlyLines=True, label="Hit with Side of Book",            color='blue', doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results5, onlyLines=True, label="Hit with Side of Book",            color='cyan', doFit=True, xlim=xlim, bins=bins)
             plt.legend(loc='upper left')
             plotDone('acc_move_book_side.png')
             
@@ -670,6 +694,61 @@ def main():
             
             #-----------------------------------------------------------------------------------------------------------
             
+            # ACC hit
+            
+            plotInfo("Accelerometer: Hit", "minimum length of measured acceleration vector per run", "probability density")
+            
+            xlim=[-0.1, 1.1]
+            bins=np.linspace(xlim[0], xlim[1], num=50)
+            
+            # Drone motors on,stationary
+            # pop
+            # book face
+            # book side
+            # nerf disk
+            
+            results1, ts, fs = getSignals("../../fp_tests", "baseline_motor", "ACC", lambda x: fold(min, 2**32, x[1:]))
+            
+            results2, ts, fs = getSignals("../../pop",      "all",            "ACC", lambda x: fold(min, 2**32, x[1:]))
+            results2.pop(2) #14 -> did not fall/stationary on table
+            results2b, ts, fs = getSignals("../../pop",     "fusion",         "ACC", lambda x: fold(min, 2**32, x[1:]))
+            results2c, ts, fs = getSignals("../../pop",     "acc",            "ACC", lambda x: fold(min, 2**32, x[1:]))
+            results2 = results2+results2b+results2c
+            results3, ts, fs = getSignals("../../fp_tests", "fp_bookface",    "ACC", lambda x: fold(min, 2**32, x[1:]))
+            results4, ts, fs = getSignals("../../fp_tests", "fp_bookside",    "ACC", lambda x: fold(min, 2**32, x[1:]))
+            results5, ts, fs = getSignals("../../fp_tests", "fp_nerf",        "ACC", lambda x: fold(min, 2**32, x[1:]))
+            
+            fit_normal(results1, onlyLines=True, label="Drone Motors on, stationary", color='purple', doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results2, onlyLines=True, label="Balloon pop",                 color='blue',   doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results3, onlyLines=True, label="Hit with Face of Book",       color='green',  doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results4, onlyLines=True, label="Hit with Side of Book",       color='cyan',   doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results5, onlyLines=True, label="Hit a Neft Disk",             color='yellow', doFit=True, xlim=xlim, bins=bins)
+            
+            plotDone('acc_hit.png')
+            
+            plotInfo("Accelerometer: Hit", "minimum length of measured acceleration vector per run", "probability density")
+            fit_normal(results1, onlyLines=True, label="Drone Motors on, stationary", color='purple', doFit=True, xlim=xlim, bins=bins)
+            plotDone('acc_hit_motor.png')
+            
+            plotInfo("Accelerometer: Hit", "minimum length of measured acceleration vector per run", "probability density")
+            fit_normal(results2, onlyLines=True, label="Balloon pop",                 color='blue',   doFit=True, xlim=xlim, bins=bins)
+            plotDone('acc_hit_pop.png')
+            
+            plotInfo("Accelerometer: Hit", "minimum length of measured acceleration vector per run", "probability density")
+            fit_normal(results3, onlyLines=True, label="Hit with Face of Book",       color='green',  doFit=True, xlim=xlim, bins=bins)
+            plotDone('acc_hit_face.png')
+            
+            plotInfo("Accelerometer: Hit", "minimum length of measured acceleration vector per run", "probability density")
+            fit_normal(results4, onlyLines=True, label="Hit with Side of Book",       color='cyan',   doFit=True, xlim=xlim, bins=bins)
+            plotDone('acc_hit_side.png')
+            
+            plotInfo("Accelerometer: Hit", "minimum length of measured acceleration vector per run", "probability density")
+            fit_normal(results5, onlyLines=True, label="Hit a Neft Disk",             color='yellow', doFit=True, xlim=xlim, bins=bins)
+            plotDone('acc_hit_nerf.png')
+            
+            
+            #-----------------------------------------------------------------------------------------------------------
+            
             # ACC pop
             
             plotInfo("Accelerometer: Pop", "minimum length of measured acceleration vector per run", "probability density")
@@ -677,36 +756,77 @@ def main():
             xlim=[-0.1, 1.1]
             bins=np.linspace(xlim[0], xlim[1], num=50)
             
-            results1, ts, fs = getSignals("../../acc", "fp_1ms_up_down", "ACC", lambda x: fold(min, 2**32, x[1:]))
+            results1, ts, fs = getSignals("../../acc",      "fp_1ms_up_down", "ACC", lambda x: fold(min, 2**32, x[1:]))
             results2, ts, fs = getSignals("../../fp_tests", "baseline_motor", "ACC", lambda x: fold(min, 2**32, x[1:]))
-            results3, ts, fs = getSignals("../../pop", "all", "ACC", lambda x: fold(min, 2**32, x[1:]))
+            results3, ts, fs = getSignals("../../pop",      "all",            "ACC", lambda x: fold(min, 2**32, x[1:]))
             results3.pop(2) #14 -> did not fall/stationary on table
-            results3b, ts, fs = getSignals("../../pop", "fusion", "ACC", lambda x: fold(min, 2**32, x[1:]))
-            results3c, ts, fs = getSignals("../../pop", "acc", "ACC", lambda x: fold(min, 2**32, x[1:]))
+            results3b, ts, fs = getSignals("../../pop",     "fusion",         "ACC", lambda x: fold(min, 2**32, x[1:]))
+            results3c, ts, fs = getSignals("../../pop",     "acc",            "ACC", lambda x: fold(min, 2**32, x[1:]))
             results3 = results3+results3b+results3c
+            results4, ts, fs = getSignals("../../acc",      "fp_1ms_side",    "ACC", lambda x: fold(min, 2**32, x[1:]))
+            
             
             fit_normal(results1, onlyLines=True, label="Moving Up and Down (+/- 1 m/s)",   color='r',      doFit=True, xlim=xlim, bins=bins)
-            fit_normal(results2, onlyLines=True, label="Drone Motors on, stationary",           color='purple', doFit=True, xlim=xlim, bins=bins)
-            fit_normal(results3, onlyLines=True, label="Balloon pop",           color='blue', doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results4, onlyLines=True, label="Moving Side to Side (+/- 1 m/s)",  color='orange', doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results2, onlyLines=True, label="Drone Motors on, stationary",      color='purple', doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results3, onlyLines=True, label="Balloon pop",                      color='blue',   doFit=True, xlim=xlim, bins=bins)
+            
             
             plt.legend(loc='upper left')
             
             plotDone('acc_pop.png')
             
             plotInfo("Accelerometer: Pop", "minimum length of measured acceleration vector per run", "probability density")
-            fit_normal(results1, onlyLines=True, label="Moving Up and Down (+/- 1 m/s)",   color='r',      doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results1, onlyLines=True, label="Moving Up and Down (+/- 1 m/s)",  color='r',      doFit=True, xlim=xlim, bins=bins)
             plt.legend(loc='upper left')
             plotDone('acc_pop_ud.png')
             
             plotInfo("Accelerometer: Pop", "minimum length of measured acceleration vector per run", "probability density")
-            fit_normal(results2, onlyLines=True, label="Drone Motors on, stationary",           color='purple', doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results2, onlyLines=True, label="Drone Motors on, stationary",     color='purple', doFit=True, xlim=xlim, bins=bins)
             plt.legend(loc='upper left')
             plotDone('acc_pop_mon.png')
             
             plotInfo("Accelerometer: Pop", "minimum length of measured acceleration vector per run", "probability density")
-            fit_normal(results3, onlyLines=True, label="Balloon pop",           color='blue', doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results3, onlyLines=True, label="Balloon pop",                     color='blue',   doFit=True, xlim=xlim, bins=bins)
             plt.legend(loc='upper left')
             plotDone('acc_pop_pop.png')
+            
+            plotInfo("Accelerometer: Pop", "minimum length of measured acceleration vector per run", "probability density")
+            fit_normal(results3, onlyLines=True, label="Moving Side to Side (+/- 1 m/s)", color='orange', doFit=True, xlim=xlim, bins=bins)
+            plt.legend(loc='upper left')
+            plotDone('acc_pop_ss.png')
+            
+            #-----------------------------------------------------------------------------------------------------------
+            
+            # ACC distribution
+            
+            xlim=[-0.0, 1.5]
+            bins=np.linspace(xlim[0], xlim[1], num=75)
+            
+            results1, ts, fs = getSignals("../../acc",      "fp_1ms_side",    "ACC", lambda x: x)
+            results2, ts, fs = getSignals("../../acc",      "fp_1ms_up_down", "ACC", lambda x: x)
+            results3, ts, fs = getSignals("../../fp_tests", "baseline_motor", "ACC", lambda x: x)
+            results4, ts, fs = getSignals("../../fp_tests", "fp_bookface",    "ACC", lambda x: x)
+            results5, ts, fs = getSignals("../../fp_tests", "fp_bookside",    "ACC", lambda x: x)
+            results6, ts, fs = getSignals("../../fp_tests", "fp_nerf",        "ACC", lambda x: x)
+            results7, ts, fs = getSignals("../../pop",      "all",            "ACC", lambda x: x)
+            results7.pop(2) #14 -> did not fall/stationary on table
+            results7b, ts, fs = getSignals("../../pop",     "fusion",         "ACC", lambda x: x)
+            results7c, ts, fs = getSignals("../../pop",     "acc",            "ACC", lambda x: x)
+            results7 = results7+results7b+results7c
+            
+            plotInfo("Accelerometer: Value Distribution", "length of measured acceleration vector", "probability density")
+            
+            fit_normal(flatten(results2), onlyLines=True, label="Moving Up and Down (+/- 1 m/s)",   color='r',      doFit=True, xlim=xlim, bins=bins)
+            fit_normal(flatten(results1), onlyLines=True, label="Moving Side to Side (+/- 1 m/s)",  color='orange', doFit=True, xlim=xlim, bins=bins)
+            fit_normal(flatten(results3), onlyLines=True, label="Drone Motors on, stationary",      color='purple', doFit=True, xlim=xlim, bins=bins)
+            fit_normal(flatten(results7), onlyLines=True, label="Balloon pop",                      color='blue',   doFit=True, xlim=xlim, bins=bins)
+            fit_normal(flatten(results4), onlyLines=True, label="Hit with Face of Book",       color='green',  doFit=True, xlim=xlim, bins=bins)
+            fit_normal(flatten(results5), onlyLines=True, label="Hit with Side of Book",       color='cyan',   doFit=True, xlim=xlim, bins=bins)
+            fit_normal(flatten(results6), onlyLines=True, label="Hit a Neft Disk",             color='yellow', doFit=True, xlim=xlim, bins=bins)
+            
+            plt.legend(loc='upper left')
+            plotDone('acc_hist.png')
             
             #-----------------------------------------------------------------------------------------------------------
             
@@ -738,7 +858,13 @@ def main():
             results4b, ts, fs = getSignals("../../fp",     "30cm_pop_filtered",  "MIC", lambda x: fold(max, -2**16, x[1:]))
             results4 = results4+results4b
             
+            results5, ts, fs = getSignals("../../fp_tests", "baseline_motor",    "MIC", lambda x: x)
+            results5 = list(map(mic_filter, results5))
+            results5 = list(map(lambda x: fold(max, -2**16, x[1:]), results5))
+            print(results5)
+            
             fit_normal(results1, onlyLines=True, label="stationary (motors off)", color='b', scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
+            fit_normal(results5, onlyLines=True, label="stationary (motors on)", color='mediumaquamarine', scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
             fit_normal(results2, onlyLines=True, label="300Hz tone",         color='g',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
             fit_normal(results3, onlyLines=True, label="pop ballon @ 150cm", color='orange', scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
             fit_normal(results4, onlyLines=True, label="pop ballon @ 40cm",  color='r',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
@@ -765,7 +891,8 @@ def main():
             pop_results.append(results[0])
             pop_results.append(results[1])
             pop_results.append(results[3])
-            fit_normal(pop_results, onlyLines=True, label="pop own ballon (motor on)",  color='purple',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
+            fit_normal(pop_results, onlyLines=True, label="pop blimp ballon (motor on)",  color='purple',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
+            # own -> not a balloon next to the blimp but the one on top of it
             
             #results, ts, fs = getSignals("../../fp_tests", "baseline_motor", "MIC", lambda x: x)
             #results = list(map(mic_filter, results))
@@ -783,6 +910,12 @@ def main():
             y_vals = plt.gca().get_yticks()
             plt.gca().set_yticklabels([str(x*10**3) for x in y_vals])
             plotDone('mic_dists_still.png')
+            
+            plotInfo("Microphone: Pop Balloon at Diffrent Distances", "maximal microphone value", "probebility (‰)")
+            fit_normal(results5, onlyLines=True, label="stationary (motors on)", color='mediumaquamarine', scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
+            y_vals = plt.gca().get_yticks()
+            plt.gca().set_yticklabels([str(x*10**3) for x in y_vals])
+            plotDone('mic_dists_motors.png')
             
             plotInfo("Microphone: Pop Balloon at Diffrent Distances", "maximal microphone value", "probebility (‰)")
             fit_normal(results2, onlyLines=True, label="300Hz tone",         color='g',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
@@ -811,6 +944,7 @@ def main():
             #-----------------------------------------------------------------------------------------------------------
             
             # mic noize
+            # no pop, just motor noize
             
             plotInfo("Microphone: Value distribution Filtered vs Unfiltered", "maximal microphone value", "probebility (‰)")
             
@@ -826,6 +960,7 @@ def main():
             y_vals = plt.gca().get_yticks()
             plt.gca().set_yticklabels(['{:3.1f}'.format(x*10**3) for x in y_vals])
             
+            plt.legend(loc='upper left')
             plotDone('mic_noize.png')
             
             
@@ -833,12 +968,14 @@ def main():
             fit_normal(flatten(results1), onlyLines=True, label="Unfiltered motor noise", color='r', xlim=xlim, bins=bins)
             y_vals = plt.gca().get_yticks()
             plt.gca().set_yticklabels(['{:3.1f}'.format(x*10**3) for x in y_vals])
+            plt.legend(loc='upper left')
             plotDone('mic_noize_unfiltered.png')
             
             plotInfo("Microphone: Value distribution Filtered vs Unfiltered", "maximal microphone value", "probebility (‰)")
             fit_normal(flatten(results2), onlyLines=True, label="Filtered motor noise", color='g', xlim=xlim, bins=bins)
             y_vals = plt.gca().get_yticks()
             plt.gca().set_yticklabels(['{:3.1f}'.format(x*10**3) for x in y_vals])
+            plt.legend(loc='upper left')
             plotDone('mic_noize_filtered.png')
             
             #-----------------------------------------------------------------------------------------------------------
@@ -858,6 +995,7 @@ def main():
             y_vals = plt.gca().get_yticks()
             plt.gca().set_yticklabels([('{:3.0f}K'.format(x/10**3) if x!=0 else '0') for x in y_vals])
             
+            plt.legend(loc='upper left')
             plotDone('mic_filter_example.png')
             
             
@@ -865,12 +1003,14 @@ def main():
             plt.plot(np.linspace(0, t, len(results1[0][:32000])), results1[0][:32000], label="Un Filtered", color='r')
             y_vals = plt.gca().get_yticks()
             plt.gca().set_yticklabels([('{:3.0f}K'.format(x/10**3) if x!=0 else '0') for x in y_vals])
+            plt.legend(loc='upper left')
             plotDone('mic_filter_example_unfiltred.png')
             
             plotInfo("Microphone: Effect of Filter When Balloon Pops", "time (s)", "microphone value")
             plt.plot(np.linspace(0, t, len(results2[0][:32000])), results2[0][:32000], label="Filltered", color='b')
             y_vals = plt.gca().get_yticks()
             plt.gca().set_yticklabels([('{:3.0f}K'.format(x/10**3) if x!=0 else '0') for x in y_vals])
+            plt.legend(loc='upper left')
             plotDone('mic_filter_example_filtred.png')
             
             
@@ -880,7 +1020,8 @@ def main():
             
             results, ts, fs = getSignals("../../../Sound detection/", "data_formated", "MIC", lambda x: x)
             t = 2
-            result = results[0][:32000]
+            sample_range = int(16000*1.75)
+            result = results[0][:sample_range]
             
             plt.specgram(result, NFFT=1024, Fs=16000)
             

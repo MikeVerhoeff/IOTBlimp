@@ -10,7 +10,7 @@ import math
 
 #config
 hideHists = False
-hideFit = False
+hideFit = True
 dontShow = False
 
 
@@ -109,6 +109,8 @@ def fold(f, a, xs):
 def fit_normal(results, color='g', label=None, onlyLines=False, doFit=True, doHist=True, bins=25, xlim=None, ylim=None, scaleToOne=False):
     mu, std = norm.fit(results)
     
+    #ylim=None
+    
     if xlim != None or ylim != None:
         ax = plt.gca()
         if xlim != None:
@@ -126,7 +128,12 @@ def fit_normal(results, color='g', label=None, onlyLines=False, doFit=True, doHi
         if scaleToOne:
             plt.hist(results, bins=bins, density=False, alpha=0.6, color=color, label=label, weights=0.1*np.ones_like(results))
         else:
-            plt.hist(results, bins=bins, density=True, alpha=0.6, color=color, label=label)
+            if hideFit:
+                print(" @ no density")
+                plt.hist(results, bins=bins, density=False, weights=[1/len(results)]*len(results),  alpha=0.6, color=color, label=label)
+            else:
+                print(" @ density")
+                plt.hist(results, bins=bins, density=True, alpha=0.6, color=color, label=label)
     
     
     if scaleToOne:
@@ -184,24 +191,29 @@ def plotValues(folder, file, sensor, timeOffset=0, index=0, label=None, color=No
     plt.plot(np.linspace(0-timeOffset, t-timeOffset, len(results)), [x * scale for x in results], label=label, alpha=alpha, color=color)
 
 def plotInfo(title, xlabel, ylabel):
-    plt.title(title)
+    if not hideFit:
+        plt.title(title)
     plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
+    if ylabel=="probability density" and hideFit:
+        plt.ylabel("probability")
+    else:
+        plt.ylabel(ylabel)
     print("----------", title, "----------")
 
-def plotDone(file, legend=True):
+def plotDone(file, legend=True, use=True):
     print("##############################################################")
     print()
-    if not legend:
-        plt.gca().get_legend().remove()
-    if hideFit:
-        plt.savefig("hists/"+file)
-    elif hideHists:
-        plt.savefig("fit/"+file)
-    else:
-        plt.savefig(file)
-    if not dontShow:
-        plt.show()
+    if use:
+        if not legend:
+            plt.gca().get_legend().remove()
+        if hideFit:
+            plt.savefig("hists/"+file)
+        elif hideHists:
+            plt.savefig("fit/"+file)
+        else:
+            plt.savefig(file)
+        if not dontShow:
+            plt.show()
     plt.clf()
 
 def flatten(l):
@@ -442,7 +454,7 @@ def main():
             
             # PIEZO still vs vibration
             
-            plotInfo("Piezo: Maximal Value From 10 Runs: Still vs Vibrations", "sensor value", "probability density")
+            plotInfo("Piezo: Maximal Value From 10 Runs: Still vs Vibrations", "maximal piezo sensor value", "probability density")
             
             xlim = [0, 17]
             bins = list(range(0,18))
@@ -455,29 +467,30 @@ def main():
             fit_normal(results3, onlyLines=True, label="Drone Motors On",         color='r', doFit=True, xlim=xlim, bins=bins)
             fit_normal(results2, onlyLines=True, label="Rotary Tool 5000 RPM", color='b', doFit=True, xlim=xlim, bins=bins)
             
-            plotDone('piezo_vibration.png')
+            plotDone('piezo_vibration.png', use=False)
             
-            plotInfo("Piezo: Drone Motors Off", "maximal sensor value per run", "probability density")
+            plotInfo("Piezo: Drone Motors Off", "maximal piezo sensor value", "probability density")
             fit_normal(results1, onlyLines=True, label="Drone Motors Off",     color='g', doFit=True, xlim=xlim, bins=bins)
-            plotDone('piezo_Motors_off.png')
+            plotDone('piezo_Motors_off.png', use=False)
             
-            plotInfo("Piezo: Rotary Tool 5000 RPM", "maximal sensor value per run", "probability density")
+            plotInfo("Piezo: Rotary Tool 5000 RPM", "maximal piezo sensor value", "probability density")
             fit_normal(results2, onlyLines=True, label="Rotary Tool 5000 RPM", color='b', doFit=True, xlim=xlim, bins=bins)
-            plotDone('piezo_5k_rpm.png')
+            plotDone('piezo_5k_rpm.png', use=False)
             
-            plotInfo("Piezo: Drone Motors On", "maximal sensor value per run", "probability density")
+            plotInfo("Piezo: Drone Motors On", "maximal piezo sensor value", "probability density")
             fit_normal(results3, onlyLines=True, label="Drone Motors On",      color='r', doFit=True, xlim=xlim, bins=bins)
-            plotDone('piezo_Motors_on.png')
+            plotDone('piezo_Motors_on.png', use=False)
             
             #-----------------------------------------------------------------------------------------------------------
             
             # PIEZO dists scaled
             
-            plotInfo("Piezo: Book Hits", "maximal sensor value per run", "probability density")
+            plotInfo("Piezo: Book Hits", "maximal piezo sensor value", "probability density")
             
             alpha = 0.6
-            xlim = [-20, 120]
-            bins = list(range(-20,121, 5))
+            xlim = [0, 120]
+            ylim=[0, 0.65]
+            bins = list(range(0,121, 5))
             
             results1, ts, fs = getSignals("../../dataPiezo", "still", "PIEZO", lambda x: fold(max, 0, x[1:]))
             results2, ts, fs = getSignals("../../fp_tests", "fp_bookface_soft", "PIEZO", lambda x: fold(max, 0, x[1:]))
@@ -485,66 +498,79 @@ def main():
             results4, ts, fs = getSignals("../../fp_tests", "fp_bookside_on",   "PIEZO", lambda x: fold(max, 0, x[1:]))
             results5, ts, fs = getSignals("../../fp_tests", "baseline_motor", "PIEZO", lambda x: fold(max, 0, x[1:]))
             
-            fit_normal(results1, onlyLines=True, label="Drone Motors Off",       color='g',      ylim=[0, 0.15], xlim=xlim, bins=bins)
-            fit_normal(results2, onlyLines=True, label="Bookface Soft",          color='r',      ylim=[0, 0.15], xlim=xlim, bins=bins)
-            fit_normal(results3, onlyLines=True, label="Bookside not on Sensor", color='orange', ylim=[0, 0.15], xlim=xlim, bins=bins)
-            fit_normal(results4, onlyLines=True, label="Bookside on Sensor",     color='blue',   ylim=[0, 0.15], xlim=xlim, bins=bins)
+            results6, ts, fs = getSignals("../../dataPartyBalloonPiezo/100K-PiozoHard-tapenormal", "PiezoH_pop", "PIEZO", lambda x: fold(max, 0, x[1:]))
+            
+            fit_normal(results1, onlyLines=True, label="Drone Motors Off",       color='g',      ylim=ylim, xlim=xlim, bins=bins)
+            fit_normal(results2, onlyLines=True, label="Bookface",          color='r',      ylim=ylim, xlim=xlim, bins=bins)
+            fit_normal(results3, onlyLines=True, label="Bookside not on Sensor", color='orange', ylim=ylim, xlim=xlim, bins=bins)
+            fit_normal(results4, onlyLines=True, label="Bookside on Sensor",     color='blue',   ylim=ylim, xlim=xlim, bins=bins)
             
             plt.legend(loc='upper right')
             
-            plotDone('piezo_book.png')
+            plotDone('piezo_book.png', use=False)
             
-            plotInfo("Piezo: Book Hits", "maximal sensor value per run", "probability density")
-            fit_normal(results5, onlyLines=True, label="Drone Motors On",       color='purple',      ylim=[0, 0.15], xlim=xlim, bins=bins)
-            fit_normal(results2, onlyLines=True, label="Bookface Soft",          color='r',      ylim=[0, 0.15], xlim=xlim, bins=bins)
-            fit_normal(results3, onlyLines=True, label="Bookside not on Sensor", color='orange', ylim=[0, 0.15], xlim=xlim, bins=bins)
-            fit_normal(results4, onlyLines=True, label="Bookside on Sensor",     color='blue',   ylim=[0, 0.15], xlim=xlim, bins=bins)
+            plotInfo("Piezo: Book Hits", "maximal piezo sensor value", "probability density")
+            fit_normal(results5, onlyLines=True, label="Stationary, Motors on",       color='g',      ylim=ylim, xlim=xlim, bins=bins)
+            fit_normal(results2, onlyLines=True, label="Bookface",          color='r',      ylim=ylim, xlim=xlim, bins=bins)
+            fit_normal(results3, onlyLines=True, label="Bookside not on Sensor", color='orange', ylim=ylim, xlim=xlim, bins=bins)
+            fit_normal(results4, onlyLines=True, label="Bookside on Sensor",     color='blue',   ylim=ylim, xlim=xlim, bins=bins)
             plt.legend(loc='upper right')
             plotDone('piezo_book_2.png')
             
-            plotInfo("Piezo: Book Hits", "maximal sensor value per run", "probability density")
-            fit_normal(results1, onlyLines=True, label="Drone Motors Off",       color='g',      ylim=[0, 0.15], xlim=xlim, bins=bins)
-            fit_normal(results5, onlyLines=True, label="Drone Motors On",       color='purple',      ylim=[0, 0.15], xlim=xlim, bins=bins)
-            fit_normal(results2, onlyLines=True, label="Bookface Soft",          color='r',      ylim=[0, 0.15], xlim=xlim, bins=bins)
-            fit_normal(results3, onlyLines=True, label="Bookside not on Sensor", color='orange', ylim=[0, 0.15], xlim=xlim, bins=bins)
-            fit_normal(results4, onlyLines=True, label="Bookside on Sensor",     color='blue',   ylim=[0, 0.15], xlim=xlim, bins=bins)
+            
+            ylim=[0, 1]
+            plotInfo("Piezo: Book Hits", "maximal piezo sensor value", "probability density")
+            fit_normal(results5, onlyLines=True, label="Stationary, Motors on",       color='g',           ylim=ylim, xlim=[0,1023], bins=np.linspace(0, 1023, num=50))
+            fit_normal(results2, onlyLines=True, label="Bookface",                    color='r',           ylim=ylim, xlim=[0,1023], bins=np.linspace(0, 1023, num=50))
+            fit_normal(results3, onlyLines=True, label="Bookside not on Sensor",      color='orange',      ylim=ylim, xlim=[0,1023], bins=np.linspace(0, 1023, num=50))
+            fit_normal(results4, onlyLines=True, label="Bookside on Sensor",          color='blue',        ylim=ylim, xlim=[0,1023], bins=np.linspace(0, 1023, num=50))
+            fit_normal(results6, onlyLines=True, label="Balloon Failure (21 cm)",     color='purple',      ylim=ylim, xlim=[0,1023], bins=np.linspace(0, 1023, num=50))
             plt.legend(loc='upper right')
-            plotDone('piezo_book_3.png')
+            plotDone('piezo_book_2_2.png')
             
-            plotInfo("Piezo: Book Hits", "maximal sensor value per run", "probability density")
-            fit_normal(results1, onlyLines=True, label="Drone Motors Off",       color='g',      ylim=[0, 0.15], xlim=xlim, bins=bins)
+            plotInfo("Piezo: Book Hits", "maximal piezo sensor value", "probability density")
+            fit_normal(results1, onlyLines=True, label="Drone Motors Off",       color='g',      ylim=ylim, xlim=xlim, bins=bins)
+            fit_normal(results5, onlyLines=True, label="Drone Motors On",       color='purple',      ylim=ylim, xlim=xlim, bins=bins)
+            fit_normal(results2, onlyLines=True, label="Bookface",          color='r',      ylim=ylim, xlim=xlim, bins=bins)
+            fit_normal(results3, onlyLines=True, label="Bookside not on Sensor", color='orange', ylim=ylim, xlim=xlim, bins=bins)
+            fit_normal(results4, onlyLines=True, label="Bookside on Sensor",     color='blue',   ylim=ylim, xlim=xlim, bins=bins)
             plt.legend(loc='upper right')
-            plotDone('piezo_Motors_off_2.png')
+            plotDone('piezo_book_3.png', use=False)
             
-            plotInfo("Piezo: Book Hits", "maximal sensor value per run", "probability density")
-            fit_normal(results5, onlyLines=True, label="Drone Motors On",       color='purple',      ylim=[0, 0.15], xlim=xlim, bins=bins)
+            plotInfo("Piezo: Book Hits", "maximal piezo sensor value", "probability density")
+            fit_normal(results1, onlyLines=True, label="Drone Motors Off",       color='g',      ylim=ylim, xlim=xlim, bins=bins)
             plt.legend(loc='upper right')
-            plotDone('piezo_Motors_on_2.png')
+            plotDone('piezo_Motors_off_2.png', use=False)
             
-            plotInfo("Piezo: Book Hits", "maximal sensor value per run", "probability density")
-            fit_normal(results2, onlyLines=True, label="Bookface Soft",          color='r',      ylim=[0, 0.15], xlim=xlim, bins=bins)
+            plotInfo("Piezo: Book Hits", "maximal piezo sensor value", "probability density")
+            fit_normal(results5, onlyLines=True, label="Drone Motors On",       color='purple',      ylim=ylim, xlim=xlim, bins=bins)
             plt.legend(loc='upper right')
-            plotDone('piezo_bookface_soft.png')
+            plotDone('piezo_Motors_on_2.png', use=False)
             
-            
-            plotInfo("Piezo: Book Hits", "maximal sensor value per run", "probability density")
-            fit_normal(results3, onlyLines=True, label="Bookside not on Sensor", color='orange', ylim=[0, 0.15], xlim=xlim, bins=bins)
+            plotInfo("Piezo: Book Hits", "maximal piezo sensor value", "probability density")
+            fit_normal(results2, onlyLines=True, label="Bookface",          color='r',      ylim=ylim, xlim=xlim, bins=bins)
             plt.legend(loc='upper right')
-            plotDone('piezo_bookside_not_on.png')
+            plotDone('piezo_bookface_soft.png', use=False)
             
             
-            plotInfo("Piezo: Book Hits", "maximal sensor value per run", "probability density")
-            fit_normal(results4, onlyLines=True, label="Bookside on Sensor",     color='blue',   ylim=[0, 0.15], xlim=xlim, bins=bins)
+            plotInfo("Piezo: Book Hits", "maximal piezo sensor value", "probability density")
+            fit_normal(results3, onlyLines=True, label="Bookside not on Sensor", color='orange', ylim=ylim, xlim=xlim, bins=bins)
             plt.legend(loc='upper right')
-            plotDone('piezo_bookside_on.png')
+            plotDone('piezo_bookside_not_on.png', use=False)
+            
+            
+            plotInfo("Piezo: Book Hits", "maximal piezo sensor value", "probability density")
+            fit_normal(results4, onlyLines=True, label="Bookside on Sensor",     color='blue',   ylim=ylim, xlim=xlim, bins=bins)
+            plt.legend(loc='upper right')
+            plotDone('piezo_bookside_on.png', use=False)
             
             #-----------------------------------------------------------------------------------------------------------
             
             # PIEZO hit position
             
-            plotInfo("Piezo: Hitting ballon in diffrent positions", "maximal sensor value per run", "probability density")
+            plotInfo("Piezo: Hitting balloon in diffrent positions", "maximal piezo sensor value", "probability density")
             
-            ylim = [0, 0.018]
+            ylim = [0, 0.8]
             xlim = [0,1023]
             bins = np.bins = np.linspace(xlim[0], xlim[1], num=25)
             
@@ -565,42 +591,42 @@ def main():
             print()
             
             
-            fit_normal(results1, onlyLines=True, label="Nerf Vortex Disk Hit, side",            color='orange', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
-            fit_normal(results2, onlyLines=True, label="Nerf Vortex Disk Hit, close to sensor", color='r',      doFit=True, xlim=xlim, ylim=ylim, bins=bins)
-            fit_normal(results3, onlyLines=True, label="Small Balloon Popping (4 runs)",        color='purple', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            fit_normal(results1, onlyLines=True, label="Nerf Disk, Side",            color='orange', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            fit_normal(results2, onlyLines=True, label="Nerf Disk, Sensor", color='r',      doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            fit_normal(results3, onlyLines=True, label="Balloon Failure (21 cm)",        color='purple', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
             #fit_normal(results4, onlyLines=True, label="Big Balloon Popping (Sensor degradating)", color='blue', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
             
             
             plotDone('piezo_nerf.png')
             
-            plotInfo("Piezo: Hitting ballon in diffrent positions", "maximal sensor value per run", "probability density")
-            fit_normal(results1, onlyLines=True, label="Nerf Vortex Disk Hit, side",            color='orange', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
-            fit_normal(results2, onlyLines=True, label="Nerf Vortex Disk Hit, close to sensor", color='r',      doFit=True, xlim=xlim, ylim=ylim, bins=bins)
-            fit_normal(results3, onlyLines=True, label="Small Balloon Popping (4 runs)",        color='purple', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
-            fit_normal(results4, onlyLines=True, label="Big Balloon Popping (Sensor degradating)", color='blue', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            plotInfo("Piezo: Hitting balloon in diffrent positions", "maximal piezo sensor value", "probability density")
+            fit_normal(results1, onlyLines=True, label="Nerf Disk, Side",            color='orange', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            fit_normal(results2, onlyLines=True, label="Nerf Disk, Sensor", color='r',      doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            fit_normal(results3, onlyLines=True, label="Balloon Failure (21 cm)",        color='purple', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            fit_normal(results4, onlyLines=True, label="Balloon Failure (50 cm, Sensor degradating)", color='blue', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
             plotDone('piezo_nerf_plus_big.png')
             
-            plotInfo("Piezo: Hitting ballon in diffrent positions", "maximal sensor value per run", "probability density")
-            fit_normal(results1, onlyLines=True, label="Nerf Vortex Disk Hit, side",            color='orange', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
-            plotDone('piezo_nerf_side.png')
+            plotInfo("Piezo: Hitting balloon in diffrent positions", "maximal piezo sensor value", "probability density")
+            fit_normal(results1, onlyLines=True, label="Nerf Disk, Side",            color='orange', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            plotDone('piezo_nerf_side.png', use=False)
             
-            plotInfo("Piezo: Hitting ballon in diffrent positions", "maximal sensor value per run", "probability density")
-            fit_normal(results2, onlyLines=True, label="Nerf Vortex Disk Hit, close to sensor", color='r',      doFit=True, xlim=xlim, ylim=ylim, bins=bins)
-            plotDone('piezo_nerf_on.png')
+            plotInfo("Piezo: Hitting balloon in diffrent positions", "maximal piezo sensor value", "probability density")
+            fit_normal(results2, onlyLines=True, label="Nerf Disk, Sensor", color='r',      doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            plotDone('piezo_nerf_on.png', use=False)
             
-            plotInfo("Piezo: Hitting ballon in diffrent positions", "maximal sensor value per run", "probability density")
+            plotInfo("Piezo: Hitting balloon in diffrent positions", "maximal piezo sensor value", "probability density")
             fit_normal(results3, onlyLines=True, label="Small Balloon Popping (4 runs)",        color='purple', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
-            plotDone('piezo_nerf_small.png')
+            plotDone('piezo_nerf_small.png', use=False)
             
-            plotInfo("Piezo: Hitting ballon in diffrent positions", "maximal sensor value per run", "probability density")
-            fit_normal(results4, onlyLines=True, label="Big Balloon Popping (Sensor degradating)", color='blue', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
-            plotDone('piezo_nerf_big.png')
+            plotInfo("Piezo: Hitting balloon in diffrent positions", "maximal piezo sensor value", "probability density")
+            fit_normal(results4, onlyLines=True, label="Balloon Failure (50 cm, Sensor degradating)", color='blue', doFit=True, xlim=xlim, ylim=ylim, bins=bins)
+            plotDone('piezo_nerf_big.png', use=True)
             
             #-----------------------------------------------------------------------------------------------------------
             
             # PIEZO dists scaled
             
-            plotInfo("Piezo: Distributions Scaled to Same Hieght", "maximal sensor value per run", "")
+            plotInfo("Piezo: Distributions Scaled to Same Hieght", "maximal piezo sensor value", "")
             
             alpha = 0.6
             xlim = [0,1023]
@@ -613,13 +639,13 @@ def main():
             fit_normal(results, onlyLines=True, label="Drone Motors On",                       color='b',      doHist=True, doFit=True, scaleToOne=True, xlim=xlim, bins=bins)
             
             results, ts, fs = getSignals("../../dataPiezo", "nerf_disk_side",  "PIEZO", lambda x: fold(max, 0, x[1:]))
-            fit_normal(results, onlyLines=True, label="Nerf Vortex Disk Hit",                  color='orange', doHist=True, doFit=True, scaleToOne=True, xlim=xlim, bins=bins)
+            fit_normal(results, onlyLines=True, label="Nerf Disk, Side",                  color='orange', doHist=True, doFit=True, scaleToOne=True, xlim=xlim, bins=bins)
             
             results, ts, fs = getSignals("../../dataPiezo", "nerf_direct_hit", "PIEZO", lambda x: fold(max, 0, x[1:]))
-            fit_normal(results, onlyLines=True, label="Nerf Vortex Disk Hit, close to sensor", color='r',      doHist=True, doFit=True, scaleToOne=True, xlim=xlim, bins=bins)
+            fit_normal(results, onlyLines=True, label="Nerf Disk, Sensor", color='r',      doHist=True, doFit=True, scaleToOne=True, xlim=xlim, bins=bins)
             
             results, ts, fs = getSignals("../../dataPartyBalloonPiezo/100K-PiozoHard-tapenormal", "PiezoH_pop", "PIEZO", lambda x: fold(max, 0, x[1:]))
-            fit_normal(results, onlyLines=True, label="Small Balloon Popping",                 color='purple', doHist=True, doFit=True, scaleToOne=True, xlim=xlim, bins=bins)
+            fit_normal(results, onlyLines=True, label="Balloon Failure (21 cm)",                 color='purple', doHist=True, doFit=True, scaleToOne=True, xlim=xlim, bins=bins)
             
             plotDone('piezo_Scaled.png')
             
@@ -631,7 +657,7 @@ def main():
             
             # ACC movement
             
-            plotInfo("Accelerometer: Movement", "minimum length of measured acceleration vector per run", "probability density")
+            plotInfo("Accelerometer: Movement", "minimum acceleration + gravity", "probability density")
            
             xlim=[0.6, 1]
             bins=np.linspace(xlim[0], xlim[1], num=40)
@@ -644,59 +670,59 @@ def main():
             results6, ts, fs = getSignals("../../fp_tests", "fp_book",        "ACC", lambda x: fold(min, 2**32, x[1:]))
             results7, ts, fs = getSignals("../../fp_tests", "fp_nerf",        "ACC", lambda x: fold(min, 2**32, x[1:]))
             
-            fit_normal(results1, onlyLines=True, label="Moving Side to Side (+/- 1 m/s)",  color='orange', doFit=True, xlim=xlim, bins=bins)
-            fit_normal(results2, onlyLines=True, label="Moving Up and Down (+/- 1 m/s)",   color='r',      doFit=True, xlim=xlim, bins=bins)
-            fit_normal(results3, onlyLines=True, label="Drone Motors on, stationary",           color='purple', doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results1, onlyLines=True, label="Horizontal Movement (+/- 1 m/s)",  color='orange', doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results2, onlyLines=True, label="Vertical Movement (+/- 1 m/s)",   color='r',      doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results3, onlyLines=True, label="Stationary, Motors on",           color='purple', doFit=True, xlim=xlim, bins=bins)
             #fit_normal(results4, onlyLines=True, label="Hit with Face of Book",            color='green', doFit=True, xlim=xlim, bins=bins)
             #fit_normal(results5, onlyLines=True, label="Hit with Side of Book",            color='blue', doFit=True, xlim=xlim, bins=bins)
             fit_normal(results6, onlyLines=True, label="Hit with a Book",            color='green', doFit=True, xlim=xlim, bins=bins)
-            #fit_normal(results7, onlyLines=True, label="Hit a Neft Disk",            color='yellow', doFit=True, xlim=xlim, bins=bins)
+            #fit_normal(results7, onlyLines=True, label="Hit a Nerf Disk",            color='yellow', doFit=True, xlim=xlim, bins=bins)
             
             plt.legend(loc='upper left')
             
             plotDone('acc_move.png')
             
             
-            plotInfo("Accelerometer: Movement", "minimum length of measured acceleration vector per run", "probability density")
-            fit_normal(results1, onlyLines=True, label="Moving Side to Side (+/- 1 m/s)",  color='orange', doFit=True, xlim=xlim, bins=bins)
+            plotInfo("Accelerometer: Movement", "minimum acceleration + gravity", "probability density")
+            fit_normal(results1, onlyLines=True, label="Horizontal Movement (+/- 1 m/s)",  color='orange', doFit=True, xlim=xlim, bins=bins)
             plt.legend(loc='upper left')
-            plotDone('acc_move_ss.png')
+            plotDone('acc_move_ss.png', use=False)
             
-            plotInfo("Accelerometer: Movement", "minimum length of measured acceleration vector per run", "probability density")
-            fit_normal(results2, onlyLines=True, label="Moving Up and Down (+/- 1 m/s)",   color='r',      doFit=True, xlim=xlim, bins=bins)
+            plotInfo("Accelerometer: Movement", "minimum acceleration + gravity", "probability density")
+            fit_normal(results2, onlyLines=True, label="Vertical Movement (+/- 1 m/s)",   color='r',      doFit=True, xlim=xlim, bins=bins)
             plt.legend(loc='upper left')
-            plotDone('acc_move_ud.png')
+            plotDone('acc_move_ud.png', use=False)
             
-            plotInfo("Accelerometer: Movement", "minimum length of measured acceleration vector per run", "probability density")
+            plotInfo("Accelerometer: Movement", "minimum acceleration + gravity", "probability density")
             fit_normal(results3, onlyLines=True, label="Drone Motors on, stationary",           color='purple', doFit=True, xlim=xlim, bins=bins)
             plt.legend(loc='upper left')
-            plotDone('acc_move_mon.png')
+            plotDone('acc_move_mon.png', use=False)
             
-            plotInfo("Accelerometer: Movement", "minimum length of measured acceleration vector per run", "probability density")
+            plotInfo("Accelerometer: Movement", "minimum acceleration + gravity", "probability density")
             fit_normal(results4, onlyLines=True, label="Hit with Face of Book",            color='green', doFit=True, xlim=[0.3, 1], bins=70)
             plt.legend(loc='upper left')
-            plotDone('acc_move_book_face.png')
+            plotDone('acc_move_book_face.png', use=False)
             
-            plotInfo("Accelerometer: Movement", "minimum length of measured acceleration vector per run", "probability density")
+            plotInfo("Accelerometer: Movement", "minimum acceleration + gravity", "probability density")
             fit_normal(results5, onlyLines=True, label="Hit with Side of Book",            color='cyan', doFit=True, xlim=xlim, bins=bins)
             plt.legend(loc='upper left')
-            plotDone('acc_move_book_side.png')
+            plotDone('acc_move_book_side.png', use=False)
             
-            plotInfo("Accelerometer: Movement", "minimum length of measured acceleration vector per run", "probability density")
+            plotInfo("Accelerometer: Movement", "minimum acceleration + gravity", "probability density")
             fit_normal(results6, onlyLines=True, label="Hit with a Book",            color='green', doFit=True, xlim=xlim, bins=bins)
             plt.legend(loc='upper left')
-            plotDone('acc_move_book.png')
+            plotDone('acc_move_book.png', use=False)
             
-            plotInfo("Accelerometer: Movement", "minimum length of measured acceleration vector per run", "probability density")
-            fit_normal(results7, onlyLines=True, label="Hit a Neft Disk",            color='yellow', doFit=True, xlim=xlim, bins=bins)
+            plotInfo("Accelerometer: Movement", "minimum acceleration + gravity", "probability density")
+            fit_normal(results7, onlyLines=True, label="Hit a Nerf Disk",            color='yellow', doFit=True, xlim=xlim, bins=bins)
             plt.legend(loc='upper left')
-            plotDone('acc_move_nerf.png')
+            plotDone('acc_move_nerf.png', use=False)
             
             #-----------------------------------------------------------------------------------------------------------
             
             # ACC hit
             
-            plotInfo("Accelerometer: Hit", "minimum length of measured acceleration vector per run", "probability density")
+            plotInfo("Accelerometer: Hit", "minimum acceleration + gravity", "probability density")
             
             xlim=[-0.1, 1.1]
             bins=np.linspace(xlim[0], xlim[1], num=50)
@@ -718,40 +744,40 @@ def main():
             results4, ts, fs = getSignals("../../fp_tests", "fp_bookside",    "ACC", lambda x: fold(min, 2**32, x[1:]))
             results5, ts, fs = getSignals("../../fp_tests", "fp_nerf",        "ACC", lambda x: fold(min, 2**32, x[1:]))
             
-            fit_normal(results1, onlyLines=True, label="Drone Motors on, stationary", color='purple', doFit=True, xlim=xlim, bins=bins)
-            fit_normal(results2, onlyLines=True, label="Balloon pop",                 color='blue',   doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results1, onlyLines=True, label="Stationary, Motors on", color='purple', doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results2, onlyLines=True, label="Balloon Failure (50 cm)",     color='blue',   doFit=True, xlim=xlim, bins=bins)
             fit_normal(results3, onlyLines=True, label="Hit with Face of Book",       color='green',  doFit=True, xlim=xlim, bins=bins)
             fit_normal(results4, onlyLines=True, label="Hit with Side of Book",       color='cyan',   doFit=True, xlim=xlim, bins=bins)
-            fit_normal(results5, onlyLines=True, label="Hit a Neft Disk",             color='yellow', doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results5, onlyLines=True, label="Hit a Nerf Disk",             color='yellow', doFit=True, xlim=xlim, bins=bins)
             
             plotDone('acc_hit.png')
             
-            plotInfo("Accelerometer: Hit", "minimum length of measured acceleration vector per run", "probability density")
+            plotInfo("Accelerometer: Hit", "minimum acceleration + gravity", "probability density")
             fit_normal(results1, onlyLines=True, label="Drone Motors on, stationary", color='purple', doFit=True, xlim=xlim, bins=bins)
-            plotDone('acc_hit_motor.png')
+            plotDone('acc_hit_motor.png', use=False)
             
-            plotInfo("Accelerometer: Hit", "minimum length of measured acceleration vector per run", "probability density")
+            plotInfo("Accelerometer: Hit", "minimum acceleration + gravity", "probability density")
             fit_normal(results2, onlyLines=True, label="Balloon pop",                 color='blue',   doFit=True, xlim=xlim, bins=bins)
-            plotDone('acc_hit_pop.png')
+            plotDone('acc_hit_pop.png', use=False)
             
-            plotInfo("Accelerometer: Hit", "minimum length of measured acceleration vector per run", "probability density")
+            plotInfo("Accelerometer: Hit", "minimum acceleration + gravity", "probability density")
             fit_normal(results3, onlyLines=True, label="Hit with Face of Book",       color='green',  doFit=True, xlim=xlim, bins=bins)
-            plotDone('acc_hit_face.png')
+            plotDone('acc_hit_face.png', use=False)
             
-            plotInfo("Accelerometer: Hit", "minimum length of measured acceleration vector per run", "probability density")
+            plotInfo("Accelerometer: Hit", "minimum acceleration + gravity", "probability density")
             fit_normal(results4, onlyLines=True, label="Hit with Side of Book",       color='cyan',   doFit=True, xlim=xlim, bins=bins)
-            plotDone('acc_hit_side.png')
+            plotDone('acc_hit_side.png', use=False)
             
-            plotInfo("Accelerometer: Hit", "minimum length of measured acceleration vector per run", "probability density")
-            fit_normal(results5, onlyLines=True, label="Hit a Neft Disk",             color='yellow', doFit=True, xlim=xlim, bins=bins)
-            plotDone('acc_hit_nerf.png')
+            plotInfo("Accelerometer: Hit", "minimum acceleration + gravity", "probability density")
+            fit_normal(results5, onlyLines=True, label="Hit a Nerf Disk",             color='yellow', doFit=True, xlim=xlim, bins=bins)
+            plotDone('acc_hit_nerf.png', use=False)
             
             
             #-----------------------------------------------------------------------------------------------------------
             
             # ACC pop
             
-            plotInfo("Accelerometer: Pop", "minimum length of measured acceleration vector per run", "probability density")
+            plotInfo("Accelerometer: Pop", "minimum acceleration + gravity", "probability density")
            
             xlim=[-0.1, 1.1]
             bins=np.linspace(xlim[0], xlim[1], num=50)
@@ -766,35 +792,35 @@ def main():
             results4, ts, fs = getSignals("../../acc",      "fp_1ms_side",    "ACC", lambda x: fold(min, 2**32, x[1:]))
             
             
-            fit_normal(results1, onlyLines=True, label="Moving Up and Down (+/- 1 m/s)",   color='r',      doFit=True, xlim=xlim, bins=bins)
-            fit_normal(results4, onlyLines=True, label="Moving Side to Side (+/- 1 m/s)",  color='orange', doFit=True, xlim=xlim, bins=bins)
-            fit_normal(results2, onlyLines=True, label="Drone Motors on, stationary",      color='purple', doFit=True, xlim=xlim, bins=bins)
-            fit_normal(results3, onlyLines=True, label="Balloon pop",                      color='blue',   doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results1, onlyLines=True, label="Vertical Movement (+/- 1 m/s)",   color='r',      doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results4, onlyLines=True, label="Horizontal Movement (+/- 1 m/s)",  color='orange', doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results2, onlyLines=True, label="Stationary, Motors on",      color='purple', doFit=True, xlim=xlim, bins=bins)
+            fit_normal(results3, onlyLines=True, label="Balloon Failure",                      color='blue',   doFit=True, xlim=xlim, bins=bins)
             
             
             plt.legend(loc='upper left')
             
             plotDone('acc_pop.png')
             
-            plotInfo("Accelerometer: Pop", "minimum length of measured acceleration vector per run", "probability density")
-            fit_normal(results1, onlyLines=True, label="Moving Up and Down (+/- 1 m/s)",  color='r',      doFit=True, xlim=xlim, bins=bins)
+            plotInfo("Accelerometer: Pop", "minimum acceleration + gravity", "probability density")
+            fit_normal(results1, onlyLines=True, label="Vertical Movement (+/- 1 m/s)",  color='r',      doFit=True, xlim=xlim, bins=bins)
             plt.legend(loc='upper left')
-            plotDone('acc_pop_ud.png')
+            plotDone('acc_pop_ud.png', use=False)
             
-            plotInfo("Accelerometer: Pop", "minimum length of measured acceleration vector per run", "probability density")
-            fit_normal(results2, onlyLines=True, label="Drone Motors on, stationary",     color='purple', doFit=True, xlim=xlim, bins=bins)
+            plotInfo("Accelerometer: Pop", "minimum acceleration + gravity", "probability density")
+            fit_normal(results2, onlyLines=True, label="Stationary, Motors on",     color='purple', doFit=True, xlim=xlim, bins=bins)
             plt.legend(loc='upper left')
-            plotDone('acc_pop_mon.png')
+            plotDone('acc_pop_mon.png', use=False)
             
-            plotInfo("Accelerometer: Pop", "minimum length of measured acceleration vector per run", "probability density")
-            fit_normal(results3, onlyLines=True, label="Balloon pop",                     color='blue',   doFit=True, xlim=xlim, bins=bins)
+            plotInfo("Accelerometer: Pop", "minimum acceleration + gravity", "probability density")
+            fit_normal(results3, onlyLines=True, label="Balloon Failure",                     color='blue',   doFit=True, xlim=xlim, bins=bins)
             plt.legend(loc='upper left')
-            plotDone('acc_pop_pop.png')
+            plotDone('acc_pop_pop.png', use=False)
             
-            plotInfo("Accelerometer: Pop", "minimum length of measured acceleration vector per run", "probability density")
-            fit_normal(results3, onlyLines=True, label="Moving Side to Side (+/- 1 m/s)", color='orange', doFit=True, xlim=xlim, bins=bins)
+            plotInfo("Accelerometer: Pop", "minimum acceleration + gravity", "probability density")
+            fit_normal(results3, onlyLines=True, label="Horizontal Movement (+/- 1 m/s)", color='orange', doFit=True, xlim=xlim, bins=bins)
             plt.legend(loc='upper left')
-            plotDone('acc_pop_ss.png')
+            plotDone('acc_pop_ss.png', use=False)
             
             #-----------------------------------------------------------------------------------------------------------
             
@@ -815,15 +841,15 @@ def main():
             results7c, ts, fs = getSignals("../../pop",     "acc",            "ACC", lambda x: x)
             results7 = results7+results7b+results7c
             
-            plotInfo("Accelerometer: Value Distribution", "length of measured acceleration vector", "probability density")
+            plotInfo("Accelerometer: Value Distribution", "acceleration + gravity", "probability density")
             
-            fit_normal(flatten(results2), onlyLines=True, label="Moving Up and Down (+/- 1 m/s)",   color='r',      doFit=True, xlim=xlim, bins=bins)
-            fit_normal(flatten(results1), onlyLines=True, label="Moving Side to Side (+/- 1 m/s)",  color='orange', doFit=True, xlim=xlim, bins=bins)
-            fit_normal(flatten(results3), onlyLines=True, label="Drone Motors on, stationary",      color='purple', doFit=True, xlim=xlim, bins=bins)
-            fit_normal(flatten(results7), onlyLines=True, label="Balloon pop",                      color='blue',   doFit=True, xlim=xlim, bins=bins)
+            fit_normal(flatten(results2), onlyLines=True, label="Vertical Movement (+/- 1 m/s)",   color='r',      doFit=True, xlim=xlim, bins=bins)
+            fit_normal(flatten(results1), onlyLines=True, label="Horizontal Movement (+/- 1 m/s)",  color='orange', doFit=True, xlim=xlim, bins=bins)
+            fit_normal(flatten(results3), onlyLines=True, label="Stationary, Motors on",      color='purple', doFit=True, xlim=xlim, bins=bins)
+            fit_normal(flatten(results7), onlyLines=True, label="Balloon Failure",                      color='blue',   doFit=True, xlim=xlim, bins=bins)
             fit_normal(flatten(results4), onlyLines=True, label="Hit with Face of Book",       color='green',  doFit=True, xlim=xlim, bins=bins)
             fit_normal(flatten(results5), onlyLines=True, label="Hit with Side of Book",       color='cyan',   doFit=True, xlim=xlim, bins=bins)
-            fit_normal(flatten(results6), onlyLines=True, label="Hit a Neft Disk",             color='yellow', doFit=True, xlim=xlim, bins=bins)
+            fit_normal(flatten(results6), onlyLines=True, label="Hit a Nerf Disk",             color='yellow', doFit=True, xlim=xlim, bins=bins)
             
             plt.legend(loc='upper left')
             plotDone('acc_hist.png')
@@ -836,7 +862,7 @@ def main():
             
             # MIC pop
             
-            plotInfo("Microphone: Pop Balloon at Diffrent Distances", "maximal microphone value", "probebility (‰)")
+            plotInfo("Microphone: Pop Balloon at Diffrent Distances", "maximal microphone value", "probability")
             
             #todo: add new ones
             
@@ -863,11 +889,11 @@ def main():
             results5 = list(map(lambda x: fold(max, -2**16, x[1:]), results5))
             print(results5)
             
-            fit_normal(results1, onlyLines=True, label="stationary (motors off)", color='b', scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
-            fit_normal(results5, onlyLines=True, label="stationary (motors on)", color='mediumaquamarine', scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
-            fit_normal(results2, onlyLines=True, label="300Hz tone",         color='g',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
-            fit_normal(results3, onlyLines=True, label="pop ballon @ 150cm", color='orange', scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
-            fit_normal(results4, onlyLines=True, label="pop ballon @ 40cm",  color='r',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
+            #fit_normal(results1, onlyLines=True, label="Stationary, Motors off", color='b', scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
+            fit_normal(results5, onlyLines=True, label="Stationary, Motors on", color='mediumaquamarine', scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
+            fit_normal(results2, onlyLines=True, label="300Hz Tone",         color='g',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
+            fit_normal(results3, onlyLines=True, label="Pop Balloon @ 150cm", color='orange', scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
+            fit_normal(results4, onlyLines=True, label="Pop Balloon @ 40cm",  color='r',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
             
             pop_results = []
             results, ts, fs = getSignals("../../pop", "all", "MIC", lambda x: fold(max, -2**16, x[1:]))
@@ -891,7 +917,7 @@ def main():
             pop_results.append(results[0])
             pop_results.append(results[1])
             pop_results.append(results[3])
-            fit_normal(pop_results, onlyLines=True, label="pop blimp ballon (motor on)",  color='purple',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
+            fit_normal(pop_results, onlyLines=True, label="Balloon Failure (50 cm)",  color='purple',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
             # own -> not a balloon next to the blimp but the one on top of it
             
             #results, ts, fs = getSignals("../../fp_tests", "baseline_motor", "MIC", lambda x: x)
@@ -899,8 +925,8 @@ def main():
             #results = list(map(lambda x: fold(max, -2**16, x[1:]), results))
             #fit_normal(results, onlyLines=True, label="Drone Motors")
             
-            y_vals = plt.gca().get_yticks()
-            plt.gca().set_yticklabels([str(x*10**3) for x in y_vals])
+            #y_vals = plt.gca().get_yticks()
+            #plt.gca().set_yticklabels(['{:3.1f}'.format(x*10**3) for x in y_vals])
             
             plotDone('mic_dists.png')
             
@@ -909,37 +935,37 @@ def main():
             fit_normal(results1, onlyLines=True, label="stationary (motors off)", color='b', scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
             y_vals = plt.gca().get_yticks()
             plt.gca().set_yticklabels([str(x*10**3) for x in y_vals])
-            plotDone('mic_dists_still.png')
+            plotDone('mic_dists_still.png', use=False)
             
             plotInfo("Microphone: Pop Balloon at Diffrent Distances", "maximal microphone value", "probebility (‰)")
             fit_normal(results5, onlyLines=True, label="stationary (motors on)", color='mediumaquamarine', scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
             y_vals = plt.gca().get_yticks()
             plt.gca().set_yticklabels([str(x*10**3) for x in y_vals])
-            plotDone('mic_dists_motors.png')
+            plotDone('mic_dists_motors.png', use=False)
             
             plotInfo("Microphone: Pop Balloon at Diffrent Distances", "maximal microphone value", "probebility (‰)")
             fit_normal(results2, onlyLines=True, label="300Hz tone",         color='g',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
             y_vals = plt.gca().get_yticks()
             plt.gca().set_yticklabels([str(x*10**3) for x in y_vals])
-            plotDone('mic_dists_300hz.png')
+            plotDone('mic_dists_300hz.png', use=False)
             
             plotInfo("Microphone: Pop Balloon at Diffrent Distances", "maximal microphone value", "probebility (‰)")
-            fit_normal(results3, onlyLines=True, label="pop ballon @ 150cm", color='orange', scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
+            fit_normal(results3, onlyLines=True, label="pop balloon @ 150cm", color='orange', scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
             y_vals = plt.gca().get_yticks()
             plt.gca().set_yticklabels([str(x*10**3) for x in y_vals])
-            plotDone('mic_dists_150.png')
+            plotDone('mic_dists_150.png', use=False)
             
             plotInfo("Microphone: Pop Balloon at Diffrent Distances", "maximal microphone value", "probebility (‰)")
-            fit_normal(results4, onlyLines=True, label="pop ballon @ 40cm",  color='r',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
+            fit_normal(results4, onlyLines=True, label="pop balloon @ 40cm",  color='r',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
             y_vals = plt.gca().get_yticks()
             plt.gca().set_yticklabels([str(x*10**3) for x in y_vals])
-            plotDone('mic_dists_40.png')
+            plotDone('mic_dists_40.png', use=False)
             
             plotInfo("Microphone: Pop Balloon at Diffrent Distances", "maximal microphone value", "probebility (‰)")
-            fit_normal(pop_results, onlyLines=True, label="pop own ballon (motor on)",  color='purple',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
+            fit_normal(pop_results, onlyLines=True, label="pop own balloon (motor on)",  color='purple',      scaleToOne=False, xlim=xlim, bins=bins, ylim=ylim)
             y_vals = plt.gca().get_yticks()
             plt.gca().set_yticklabels([str(x*10**3) for x in y_vals])
-            plotDone('mic_dists_pop.png')
+            plotDone('mic_dists_pop.png', use=False)
             
             #-----------------------------------------------------------------------------------------------------------
             

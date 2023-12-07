@@ -649,6 +649,22 @@ def main():
             
             plotDone('piezo_Scaled.png')
             
+            
+            #-----------------------------------------------------------------------------------------------------------
+            
+            plotInfo("Piezo: pop example", "time (s)", "piezo sensor value")
+            
+            alpha = 0.7
+            
+            results, ts, fs = getSignals("../../dataPartyBalloonPiezo/100K-PiozoHard-tapenormal", "PiezoH_pop", "PIEZO", lambda x: x)
+            results = results[3]
+            t = ts[3]
+            
+            plt.plot(np.linspace(0, t, len(results)), results, label="Balloon Failure", alpha=alpha, color='blue')
+            #leg = plt.legend(loc='lower center')
+            plotDone('piezo_example.png')
+            
+            
             #-----------------------------------------------------------------------------------------------------------
         
         elif sys.argv[1] == "ACC":
@@ -853,6 +869,21 @@ def main():
             
             plt.legend(loc='upper left')
             plotDone('acc_hist.png')
+            
+            #-----------------------------------------------------------------------------------------------------------
+            
+            plotInfo("Accelorometer: pop example", "time (s)", "acceleration + gravity")
+            
+            alpha = 0.7
+            
+            results, ts, fs = getSignals("../../pop", "fusion", "ACC", lambda x: x)
+            results = results[-1]
+            t = ts[-1]
+            
+            plt.plot(np.linspace(0, t, len(results)), results, label="Balloon Failure", alpha=alpha, color='blue')
+            #leg = plt.legend(loc='lower center')
+            plotDone('acc_example_2.png')
+            
             
             #-----------------------------------------------------------------------------------------------------------
             

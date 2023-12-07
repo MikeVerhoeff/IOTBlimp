@@ -12,7 +12,7 @@ Settings settings;
 Gyroscope     gyr;
 Accelerometer acc;
 Piezo         pie_flex(A2, 50);
-Piezo         pie_hard(A1, 500);
+Piezo         pie_hard(A3, 500);
 Proximity     pro;
 
 short acc_off = 500;
@@ -37,6 +37,17 @@ SensorInterface acc_i ('c', "acc"     , [](int f, unsigned long t){   acc.init(f
 SensorInterface gyr_i ('d', "gyr"     , [](int f, unsigned long t){   gyr.init(f, t);                 }, TestInfo([](){ return gyr.test();                 }, acc_off,   acc_on  ),    [](){  gyr.del();            });
 SensorInterface pro_i ('g', "pro"     , [](int f, unsigned long t){   pro.init(f, t);                 }, TestInfo([](){ return pro.test();                 }, prox_off,  prox_on ),    [](){  pro.del();            });
 SensorInterface clu_i ('t', "Toggle Clutch", [](int f, unsigned long t){transform_init(f, t);         }, TestInfo([](){ return tranfrom_test();            }, 100,       200     ),    [](){  transfrom_delete();   });
+
+
+short tmp1() {
+  return 0;
+}
+void tmp2() {
+  
+}
+SensorInterface cuc_i ('1', "uncouple", [](int f, unsigned long t){uncouple_servo();}, TestInfo(tmp1, 100, 200), tmp2);
+SensorInterface cc_i  ('2', "couple",   [](int f, unsigned long t){couple_servo();  }, TestInfo(tmp1, 100, 200), tmp2);
+
 
 // Combinations
 TestInfo piezosTests[] = { 
@@ -92,6 +103,8 @@ void setup() {
   settings.addSensorInterface(&all);
   settings.addSensorInterface(&fusion);
   settings.addSensorInterface(&clu_i);
+  settings.addSensorInterface(&cuc_i);
+  settings.addSensorInterface(&cc_i);
 
 
   Serial.begin(115200);

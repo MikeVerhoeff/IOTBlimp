@@ -38,17 +38,6 @@ SensorInterface gyr_i ('d', "gyr"     , [](int f, unsigned long t){   gyr.init(f
 SensorInterface pro_i ('g', "pro"     , [](int f, unsigned long t){   pro.init(f, t);                 }, TestInfo([](){ return pro.test();                 }, prox_off,  prox_on ),    [](){  pro.del();            });
 SensorInterface clu_i ('t', "Toggle Clutch", [](int f, unsigned long t){transform_init(f, t);         }, TestInfo([](){ return tranfrom_test();            }, 100,       200     ),    [](){  transfrom_delete();   });
 
-
-short tmp1() {
-  return 0;
-}
-void tmp2() {
-  
-}
-SensorInterface cuc_i ('1', "uncouple", [](int f, unsigned long t){uncouple_servo();}, TestInfo(tmp1, 100, 200), tmp2);
-SensorInterface cc_i  ('2', "couple",   [](int f, unsigned long t){couple_servo();  }, TestInfo(tmp1, 100, 200), tmp2);
-
-
 // Combinations
 TestInfo piezosTests[] = { 
                           TestInfo((TestFunction) [](){return pie_flex.test();}, piezo_off, piezo_on, 1),
@@ -103,8 +92,6 @@ void setup() {
   settings.addSensorInterface(&all);
   settings.addSensorInterface(&fusion);
   settings.addSensorInterface(&clu_i);
-  settings.addSensorInterface(&cuc_i);
-  settings.addSensorInterface(&cc_i);
 
 
   Serial.begin(115200);

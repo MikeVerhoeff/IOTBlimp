@@ -21,6 +21,8 @@
 ### /Sound detection 
 - Scripts for testing the filter applied to the microphone
 
+### /CAD
+- 3D Model of the blimp drone mechanism
 
 # Overview of Failure Detection Arduino Project
 

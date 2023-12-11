@@ -115,6 +115,7 @@ def plot_activation(off, on, zorder=None):
     xlim = plt.gca().get_xlim()
     ylim = plt.gca().get_ylim()
     scale = ylim[1]
+    plt.gca().set_ylim(ylim)
     if scale>1:
         scale=1
     
@@ -162,19 +163,22 @@ def fit_normal(results, color='g', label=None, onlyLines=False, doFit=True, doHi
                 
             if hideFit and not cumulative:
                 print(" @ no density")
-                n,x,l = plt.hist(results, bins=bins, density=False, cumulative=cumulative, weights=[1/len(results)]*len(results),  alpha=alpha, color=color, label=label, zorder=zorder, histtype="step" if cumulative else None)
-                for b in l: b.remove()
-                bin_centers = [0]+0.5*(x[1:]+x[:-1])
-                plt.plot(bin_centers,[0]+n,  alpha=alpha, color=color, label=label, zorder=zorder, )
+                n,x,l = plt.hist(results, bins=bins, density=False, cumulative=cumulative, weights=[1/len(results)]*len(results),  alpha=alpha, color=color, label=label, zorder=zorder)
+                if cumulative:
+                    for b in l: b.remove()
+                    bin_centers = [0]+list(0.5*(x[1:]+x[:-1]))
+                    plt.plot(bin_centers,[0]+list(n),  alpha=alpha, color=color, label=label, zorder=zorder, )
             else:
                 print(" @ density")
-                n,x,l = plt.hist(results, bins=bins, density=True, cumulative=cumulative, alpha=alpha, color=color, label=label, zorder=zorder, histtype="step" if cumulative else None)
-                for b in l: b.remove()
-                bin_centers = 0.5*(x[1:]+x[:-1])
-                y = [0]+list(n)
-                x = [0]+list(bin_centers)
-                print(x, y)
-                plt.plot(x, y,  alpha=alpha, color=color, label=label, zorder=zorder, )
+                n,x,l = plt.hist(results, bins=bins, density=True, cumulative=cumulative, alpha=alpha, color=color, label=label, zorder=zorder)
+                if cumulative:
+                    for b in l: b.remove()
+                    bin_centers = 0.5*(x[1:]+x[:-1])
+                    y = [0]+list(n)
+                    x = list(bin_centers)
+                    x = [x[0]-(x[1]-x[0])] + x
+                    print(x, y)
+                    plt.plot(x, y,  alpha=alpha, color=color, label=label, zorder=zorder, )
     
     
     if scaleToOne:
@@ -198,7 +202,7 @@ def fit_normal(results, color='g', label=None, onlyLines=False, doFit=True, doHi
     
     print(" - ", label, "Fit results: mu = %.2f,  std = %.2f" % (mu, std))
     
-    if not onlyLines:
+    if (not onlyLines) and (not cumulative):
         title = "Fit results: mu = %.2f,  std = %.2f" % (mu, std)
         plt.title(title)
     
@@ -235,10 +239,10 @@ def plotInfo(title, xlabel, ylabel):
     if not hideFit:
         plt.title(title)
     plt.xlabel(xlabel)
-    if ylabel=="probability density" and hideFit:
-        plt.ylabel("probability")
-    if ylabel=="probability density" or ylabel == "probability":
+    if cumulative and (ylabel=="probability density" or ylabel == "probability"):
         plt.ylabel("probability (CDF)")
+    elif ylabel=="probability density" and hideFit:
+        plt.ylabel("count / total")
     else:
         plt.ylabel(ylabel)
     print("----------", title, "----------")
@@ -289,6 +293,8 @@ def main():
                 print("Filtering")
                 results = list(map(mic_filter, results))
             
+            
+            print(len(sys.argv))
             if len(sys.argv)>=8:
                 print("set labels")
                 plt.xlabel(sys.argv[6])
@@ -308,13 +314,25 @@ def main():
             results, ts, fs = getSignals(sys.argv[1], sys.argv[2], sys.argv[3], lambda x: fold(max, -2**16, x[1:]))
             if len(sys.argv)>=6 and sys.argv[5]=="filter":
                 results = list(map(mic_filter, results))
-            fit_normal(results)
+                
+            if len(sys.argv)>=8:
+                print("set labels")
+                plt.xlabel(sys.argv[6])
+                plt.ylabel(sys.argv[7])
+            
+            fit_normal(results, color='b')
             
             
         elif sys.argv[4] == "min":
             results, ts, fs = getSignals(sys.argv[1], sys.argv[2], sys.argv[3], lambda x: fold(min, 2**32, x[1:]))
             if len(sys.argv)>=6 and sys.argv[5]=="filter":
                 results = list(map(mic_filter, results))
+                
+            if len(sys.argv)>=8:
+                print("set labels")
+                plt.xlabel(sys.argv[6])
+                plt.ylabel(sys.argv[7])
+            
             fit_normal(results)
         
     else:
@@ -491,7 +509,7 @@ def main():
             plotInfo("Piezo: Hitting balloon in diffrent positions", "maximal piezo sensor value", "probability density")
             
             ylim = [0, 0.8]
-            xlim = [0,1024]
+            xlim = [0,1023]
             bins = np.bins = np.linspace(xlim[0], xlim[1], num=25)
             
             results1, ts, fs = getSignals("../../dataPiezo", "nerf_disk_side", "PIEZO", lambda x: fold(max, 0, x[1:]))
@@ -530,7 +548,7 @@ def main():
             
             # PIEZO dists scaled
             
-            plotInfo("Piezo: Distributions Scaled to Same Hieght", "maximal piezo sensor value", "")
+            plotInfo("Piezo: Distributions Scaled to Same Hieght", "maximal piezo sensor value", "probability density")
             
             alpha = 0.6
             xlim = [0,1023]
@@ -667,7 +685,7 @@ def main():
             
             # MIC pop
             
-            plotInfo("Microphone: Pop Balloon at Diffrent Distances", "maximal microphone value", "probability")
+            plotInfo("Microphone: Pop Balloon at Diffrent Distances", "maximal microphone value", "probability density")
             
             #todo: add new ones
             
@@ -808,7 +826,7 @@ def main():
     #print(mean, standard_deviation)
     
         elif sys.argv[1] == "FUSION":
-            plotInfo("Microphone: Pop Spectrogram", "Time of responce (s)", "CDF")
+            plotInfo("Microphone: Pop Spectrogram", "Time of response (s)", "CDF")
             times = [t/240 for t in [6,5,16,8,12,12,7,11,9,16]]
             fit_normal(times, onlyLines=True, color='b')
             #plt.ecdf(times)

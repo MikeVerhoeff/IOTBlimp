@@ -1,0 +1,1 @@
+save_args.py mic_(2).txt -f 175 -t 4 -i mic

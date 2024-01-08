@@ -19,9 +19,11 @@ void test2() {
   Serial.println("0");
 }
 
-SensorInterface a0 ('0', "A0", test0);
-SensorInterface a1 ('1', "A1", test1);
-SensorInterface a2 ('c', "Constant 0", test2);
+SensorInterface a0 ('mic', "mic", test_mic);
+SensorInterface a1 ('imu', "imu", test_imu);
+SensorInterface a2 ('pie', "pie", test_pie);
+SensorInterface a2 ('pro', "pro", test_pro);
+
 
 void setup() {
   ui.settings.addSensorInterface(&a0);

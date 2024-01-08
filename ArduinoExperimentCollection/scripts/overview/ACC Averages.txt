@@ -1,0 +1,8 @@
+---------- Accelerometer: Value Distribution ----------
+ -  Moving Up and Down (+/- 1 m/s) Fit results: mu = 1.03,  std = 0.15
+ -  Moving Side to Side (+/- 1 m/s) Fit results: mu = 1.02,  std = 0.06
+ -  Drone Motors on, stationary Fit results: mu = 1.00,  std = 0.02
+ -  Balloon pop Fit results: mu = 0.95,  std = 0.58
+ -  Hit with Face of Book Fit results: mu = 1.01,  std = 0.10
+ -  Hit with Side of Book Fit results: mu = 1.01,  std = 0.05
+ -  Hit a Neft Disk Fit results: mu = 1.02,  std = 0.13

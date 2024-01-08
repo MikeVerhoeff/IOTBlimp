@@ -2,7 +2,7 @@
 
 #include "SensorInterface.h"
 
-#define NUM_INTERFACES 10
+#define NUM_INTERFACES 4
 
 class Settings {
 private:

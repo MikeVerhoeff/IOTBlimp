@@ -1,0 +1,12 @@
+python distrib.py ../../pop fusion P_X max
+distrib
+8698.0 ../../pop/fusion/fusion.txt
+9000.0 ../../pop/fusion_(1)/fusion_(1).txt
+7000.0 ../../pop/fusion_(2)/fusion_(2).txt
+7000.0 ../../pop/fusion_(3)/fusion_(3).txt
+7000.0 ../../pop/fusion_(4)/fusion_(4).txt
+7000.0 ../../pop/fusion_(5)/fusion_(5).txt
+7000.0 ../../pop/fusion_(6)/fusion_(6).txt
+7000.0 ../../pop/fusion_(7)/fusion_(7).txt
+7000.0 ../../pop/fusion_(8)/fusion_(22).txt
+7000.0 ../../pop/fusion_(9)/fusion_(9).txt

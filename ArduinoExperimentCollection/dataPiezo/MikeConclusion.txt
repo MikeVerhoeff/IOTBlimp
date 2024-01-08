@@ -1,0 +1,3 @@
+Hitting the ballon with a nerf vortex disk (repeatable analought for a stone) can cause a false positive if it hits directly on the sensor.
+Hitting on the side also has an effect but less so.
+Multiple Sensors, should be able to rule out errors, since it is unlikely that both get hit at once

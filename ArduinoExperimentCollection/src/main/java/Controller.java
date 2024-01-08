@@ -59,10 +59,14 @@ public class Controller {
     @FXML
     private ChoiceBox<Pair<SerialPort, String>> deviceSelector;
 
+    @FXML
+    private Button endButton;
+
     private SerialPort port;
     private OutputStream log;
     private String logFileName;
     private String countedExperimentName;
+    private boolean saveEnded;
     int baudRate = 115200;
 
     @FXML
@@ -141,29 +145,30 @@ public class Controller {
         List<Process> processes = new ArrayList<>(10);
         for(File scriptFile : scriptDir.listFiles()) {
             try {
-                System.out.println("Running script: "+scriptFile.getName());
-                ProcessBuilder processBuilder = new ProcessBuilder(
-                        pythonField.getText(), scriptFile.getAbsolutePath(),
-                        logFileName,
-                        "-f", frequencyField.getText(),
-                        timeCountToggleButton.isSelected()?"-c":"-t", timeCountField.getText(),
-                        "-i", interfaceSelector.getValue()==null?"NONE":interfaceSelector.getValue().value);
-                processBuilder.redirectErrorStream(true);
+                if (scriptFile.isFile()) {
+                    System.out.println("Running script: " + scriptFile.getName());
+                    ProcessBuilder processBuilder = new ProcessBuilder(
+                            pythonField.getText(), scriptFile.getAbsolutePath(),
+                            logFileName,
+                            "-f", frequencyField.getText(),
+                            timeCountToggleButton.isSelected() ? "-c" : "-t", timeCountField.getText(),
+                            "-i", interfaceSelector.getValue() == null ? "NONE" : interfaceSelector.getValue().value);
+                    processBuilder.redirectErrorStream(true);
 
-                processBuilder.directory(scriptRunDirectory);
+                    processBuilder.directory(scriptRunDirectory);
 
-                Process process = processBuilder.start();
+                    Process process = processBuilder.start();
 
-                new Thread(()->{
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                    reader.lines().<Runnable>map(line -> () -> {
-                        pythonOutputTextField.appendText(line);
-                        pythonOutputTextField.appendText("\n");
-                    }).forEach(Platform::runLater);
-                }).start();
+                    new Thread(() -> {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                        reader.lines().<Runnable>map(line -> () -> {
+                            pythonOutputTextField.appendText(line);
+                            pythonOutputTextField.appendText("\n");
+                        }).forEach(Platform::runLater);
+                    }).start();
 
-                processes.add(process);
-
+                    processes.add(process);
+                }
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -184,7 +189,12 @@ public class Controller {
             File moveTo = new File(new File(dataDirField.getText()), countedExperimentName);
             System.out.println("Moving named experiment to: "+moveTo.getAbsolutePath());
             boolean ok = scriptRunDirectory.renameTo(moveTo);
-            System.out.println("moved: "+(ok?"True":"False"));
+            System.out.println("moved script results: "+(ok?"True":"False"));
+
+            File logFile = new File(logFileName);
+            File logFileDst = new File(moveTo, logFile.getName());
+            logFile.renameTo(logFileDst);
+
             finalLocation = moveTo;
         } else {
             finalLocation = scriptRunDirectory;
@@ -205,17 +215,21 @@ public class Controller {
         pythonOutputTextField.clear();
         serialOutputTextField.clear();
         imagesBox.getChildren().clear();
+        saveEnded = false;
         try {
             File dataDir = new File(dataDirField.getText());
             dataDir.mkdir();
             File logFile;
+            File logFileDir;
             if(!experimentNameField.getText().equals("")) {
                 countedExperimentName = experimentNameField.getText();
                 logFile = new File(dataDir, countedExperimentName + ".txt");
+                logFileDir = new File(dataDir, countedExperimentName);
                 int i=1;
-                while(logFile.exists()) {
+                while(logFile.exists() || logFileDir.exists()) {
                     countedExperimentName = experimentNameField.getText() + "_("+i+")";
                     logFile = new File(dataDir, countedExperimentName + ".txt");
+                    logFileDir = new File(dataDir, countedExperimentName);
                     i++;
                 }
             } else {
@@ -234,10 +248,7 @@ public class Controller {
         port.addDataListener(new SerialListener(e->{
             byte[] newData = new byte[port.bytesAvailable()];
             int numRead = port.readBytes(newData, newData.length);
-            //System.out.println("Read " + numRead + " bytes.");
-            Platform.runLater(()->{
-                serialOutputTextField.appendText(new String(newData, StandardCharsets.UTF_8));
-            });
+//            System.out.println("Read " + numRead + " bytes.");
             boolean end_found = false;
             int end_index = 0;
             for (int i=0; i<numRead; i++) {
@@ -247,9 +258,10 @@ public class Controller {
                     end_index = i;
                 }
             }
-            if(log != null) {
+            if (log != null) {
                 try {
                     if (end_found) {
+                        endButton.setDisable(true);
                         log.write(newData, 0, end_index);
                         log.close();
                         log = null;
@@ -261,6 +273,14 @@ public class Controller {
                 } catch (Exception ex) {
 
                 }
+            }
+            if(end_found) {
+                saveEnded = true;
+            }
+            if(saveEnded) {
+                Platform.runLater(() -> {
+                    serialOutputTextField.appendText(new String(newData, StandardCharsets.UTF_8));
+                });
             }
         }));
     }
@@ -322,7 +342,7 @@ public class Controller {
                 try {
                     if(delay > 30) {
                         delay = 30;
-                        System.err.println("Limited delay to 30 secconds");
+                        System.err.println("Limited delay to 30 seconds");
                     }
                     Thread.sleep(delay* 1000L);
                 } catch (InterruptedException e) {
@@ -344,6 +364,11 @@ public class Controller {
                     // time
                     startString.append("t"+timeCountField.getText());
                 }
+
+                if(timeCountField.getText().equals("0")) {
+                    endButton.setDisable(false);
+                }
+
                 prepareForNewSerialInput();
                 startString.append("-");
                 String command = startString.toString();
@@ -358,6 +383,12 @@ public class Controller {
                 //port.getOutputStream().write(new byte[]{'s'});
             }
         }
+    }
+
+    @FXML
+    void endAction(ActionEvent event) {
+        endButton.setDisable(true);
+        writeStringToPort("e");
     }
 
     public void onCloseWindow() {

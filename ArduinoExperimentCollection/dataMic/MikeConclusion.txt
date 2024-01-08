@@ -1,0 +1,2 @@
+Filter works well 300Hz sine from phone is filtered out
+A closeby 30cm balloon poppong might couse a false positive, but at 1.5m it is already unlikely
